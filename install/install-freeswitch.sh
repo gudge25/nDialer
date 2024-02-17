@@ -23,8 +23,8 @@ if [ -z "${BRANCH}" ]; then
     BRANCH='master'
 fi
 
-FS_CONF_PATH=https://raw.github.com/newfies-dialer/newfies-dialer/$BRANCH/install/freeswitch-conf
-FS_INIT_PATH=https://raw.github.com/newfies-dialer/newfies-dialer/$BRANCH/install/freeswitch-init
+FS_CONF_PATH=https://raw.github.com/gudge25/dialer/$BRANCH/install/freeswitch-conf
+FS_INIT_PATH=https://raw.github.com/gudge25/dialer/$BRANCH/install/freeswitch-init
 FS_CONFIG_PATH=/etc/freeswitch
 FS_BASE_PATH=/usr/src
 CURRENT_PATH=$PWD
@@ -119,7 +119,7 @@ func_install_fs_sources() {
     cd $FS_BASE_PATH
     rm -rf freeswitch
     # dont use depth :  --depth=1 as we wont be able to checkout
-    git clone --branch=$FS_VERSION https://freeswitch.org/stash/scm/fs/freeswitch.git --depth=1
+    git clone --branch=$FS_VERSION https://github.com/signalwire/freeswitch.git --depth=1
     cd $FS_BASE_PATH/freeswitch
     # git checkout $FS_VERSION
 

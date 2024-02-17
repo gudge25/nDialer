@@ -174,10 +174,10 @@ func_install_dependencies(){
             if [ $chk -lt 1 ] ; then
                 echo "Setup new sources.list entries"
                 #Used by Node.js
-                echo "deb http://ftp.us.debian.org/debian $DEBIANCODE-backports main" >> /etc/apt/sources.list
+                echo "deb http://archive.debian.org/debian $DEBIANCODE-backports main" >> /etc/apt/sources.list
             fi
             #Used by PostgreSQL
-            echo "deb http://apt.postgresql.org/pub/repos/apt/ $DEBIANCODE-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+            echo "deb http://apt-archive.postgresql.org/pub/repos/apt/ $DEBIANCODE-pgdg main" > /etc/apt/sources.list.d/pgdg.list
             wget --no-check-certificate --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc|apt-key add -
             apt-get update
 
@@ -300,7 +300,7 @@ func_install_dependencies(){
     rm -rf luarocks
     # wget --no-check-certificate http://luarocks.org/releases/luarocks-2.1.2.tar.gz
     #Use Github for sources
-    wget --no-check-certificate https://github.com/keplerproject/luarocks/archive/v2.1.2.tar.gz -O luarocks-2.1.2.tar.gz
+    wget --no-check-certificate https://github.com/keplerproject/luarocks/archive/v2.4.4.tar.gz -O luarocks-2.4.4.tar.gz
     tar zxf luarocks-*.tar.gz
     rm -rf luarocks-*.tar.gz
     mv luarocks-* luarocks
