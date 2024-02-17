@@ -805,8 +805,6 @@ func_install_frontend(){
 
     #Install Depedencies
     #func_install_dependencies
-    echo "==DONE=="
-    exit 1
     #Install Redis
     func_install_redis
     echo "==DONE=="
