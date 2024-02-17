@@ -130,7 +130,7 @@ if [ $INSTALL_FS = "yes" ]; then
     /etc/init.d/freeswitch start
 fi
 
-#Install Newfies
-cd /usr/src/
-wget --no-check-certificate https://raw.github.com/gudge25/dialer/$BRANCH/install/install-newfies.sh -O install-newfies.sh
-bash install-newfies.sh
+# #Install Newfies
+# cd /usr/src/
+# wget --no-check-certificate https://raw.github.com/gudge25/dialer/$BRANCH/install/install-newfies.sh -O install-newfies.sh
+# bash install-newfies.sh
