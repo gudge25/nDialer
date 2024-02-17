@@ -109,7 +109,7 @@ echo ""
 
 case $DIST in
     'DEBIAN')
-        apt-get -y update
+        #apt-get -y update
         apt-get -y install vim git-core
     ;;
     'CENTOS')
