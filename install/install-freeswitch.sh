@@ -62,7 +62,7 @@ func_install_deps() {
     echo "Setting up Prerequisites and Dependencies for FreeSWITCH"
     case $DIST in
         'DEBIAN')
-            apt-get -y update
+            #apt-get -y update
             apt-get -y install locales-all
 
             export LANGUAGE=en_US.UTF-8
