@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+# set -e
 #
 # Newfies-Dialer License
 # http://www.newfies-dialer.org
