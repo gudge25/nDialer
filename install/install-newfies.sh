@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 #
 # Newfies-Dialer License
 # http://www.newfies-dialer.org
@@ -67,6 +68,9 @@ echo ""
 read INPUT
 
 func_install_frontend
+echo "func_install_frontend DONE."
+exit 1
+
 func_install_landing_page
 func_install_backend
 
