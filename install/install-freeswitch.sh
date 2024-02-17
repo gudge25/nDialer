@@ -15,7 +15,7 @@
 
 #
 # To download and run the script on your server :
-# cd /usr/src/ ; rm install-freeswitch.sh ; wget --no-check-certificate https://raw.github.com/newfies-dialer/newfies-dialer/develop/install/install-freeswitch.sh ; chmod +x install-freeswitch.sh ; ./install-freeswitch.sh
+# cd /usr/src/ ; rm install-freeswitch.sh ; wget --no-check-certificate https://raw.githubusercontent.com/newfies-dialer/newfies-dialer/develop/install/install-freeswitch.sh ; chmod +x install-freeswitch.sh ; ./install-freeswitch.sh
 #
 
 # Set branch to install develop / default: master
@@ -23,8 +23,8 @@ if [ -z "${BRANCH}" ]; then
     BRANCH='master'
 fi
 
-FS_CONF_PATH=https://raw.github.com/gudge25/dialer/$BRANCH/install/freeswitch-conf
-FS_INIT_PATH=https://raw.github.com/gudge25/dialer/$BRANCH/install/freeswitch-init
+FS_CONF_PATH=https://raw.githubusercontent.com/gudge25/dialer/$BRANCH/install/freeswitch-conf
+FS_INIT_PATH=https://raw.githubusercontent.com/gudge25/dialer/$BRANCH/install/freeswitch-init
 FS_CONFIG_PATH=/etc/freeswitch
 FS_BASE_PATH=/usr/src
 CURRENT_PATH=$PWD
@@ -63,7 +63,7 @@ func_install_deps() {
     case $DIST in
         'DEBIAN')
             #apt-get -y update
-            apt-get -y install locales-all
+            apt-get -y install locales-all pkg-config
 
             export LANGUAGE=en_US.UTF-8
             export LANG=en_US.UTF-8

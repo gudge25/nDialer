@@ -15,13 +15,13 @@
 
 #
 # To download and run the script on your server :
-# cd /usr/src/ ; rm install-all.sh ; wget --no-check-certificate https://raw.github.com/newfies-dialer/newfies-dialer/master/install/install-all.sh ; chmod +x install-all.sh ; ./install-all.sh
+# cd /usr/src/ ; rm install-all.sh ; wget --no-check-certificate https://raw.githubusercontent.com/newfies-dialer/newfies-dialer/master/install/install-all.sh ; chmod +x install-all.sh ; ./install-all.sh
 #
 #
 # To install develop branch:
 #
 # export BRANCH=develop; export INSTALL_FS=yes
-# cd /usr/src/ ; rm install-all.sh ; wget --no-check-certificate https://raw.github.com/newfies-dialer/newfies-dialer/develop/install/install-all.sh ; chmod +x install-all.sh ; ./install-all.sh
+# cd /usr/src/ ; rm install-all.sh ; wget --no-check-certificate https://raw.githubusercontent.com/newfies-dialer/newfies-dialer/develop/install/install-all.sh ; chmod +x install-all.sh ; ./install-all.sh
 #
 
 # Set branch to install develop / default: master
@@ -125,12 +125,12 @@ esac
 if [ $INSTALL_FS = "yes" ]; then
     #Install Freeswitch
     cd /usr/src/
-    wget --no-check-certificate  https://raw.github.com/gudge25/dialer/$BRANCH/install/install-freeswitch.sh -O install-freeswitch.sh
+    wget --no-check-certificate  https://raw.githubusercontent.com/gudge25/dialer/$BRANCH/install/install-freeswitch.sh -O install-freeswitch.sh
     bash install-freeswitch.sh
     /etc/init.d/freeswitch start
 fi
 
 # #Install Newfies
 # cd /usr/src/
-# wget --no-check-certificate https://raw.github.com/gudge25/dialer/$BRANCH/install/install-newfies.sh -O install-newfies.sh
+# wget --no-check-certificate https://raw.githubusercontent.com/gudge25/dialer/$BRANCH/install/install-newfies.sh -O install-newfies.sh
 # bash install-newfies.sh

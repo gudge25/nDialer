@@ -17,10 +17,10 @@
 # To download and run the script on your server :
 #
 # >> Install with Master script :
-# cd /usr/src/ ; rm install-newfies.sh ; wget --no-check-certificate https://raw.github.com/newfies-dialer/newfies-dialer/master/install/install-newfies.sh ; chmod +x install-newfies.sh ; ./install-newfies.sh
+# cd /usr/src/ ; rm install-newfies.sh ; wget --no-check-certificate https://raw.githubusercontent.com/newfies-dialer/newfies-dialer/master/install/install-newfies.sh ; chmod +x install-newfies.sh ; ./install-newfies.sh
 #
 # >> Install with develop script :
-# cd /usr/src/ ; rm install-newfies.sh ; wget --no-check-certificate https://raw.github.com/newfies-dialer/newfies-dialer/develop/install/install-newfies.sh ; chmod +x install-newfies.sh ; ./install-newfies.sh
+# cd /usr/src/ ; rm install-newfies.sh ; wget --no-check-certificate https://raw.githubusercontent.com/newfies-dialer/newfies-dialer/develop/install/install-newfies.sh ; chmod +x install-newfies.sh ; ./install-newfies.sh
 #
 
 # Set branch to install develop / default: master
@@ -473,9 +473,9 @@ func_install_source(){
     cp -r /usr/src/newfies-dialer/lua $LUA_DIR
     cd $LUA_DIR/libs/
     rm acapela.lua
-    wget --no-check-certificate https://raw.github.com/newfies-dialer/lua-acapela/master/acapela.lua
+    wget --no-check-certificate https://raw.githubusercontent.com/newfies-dialer/lua-acapela/master/acapela.lua
     rm mstranslator.lua
-    wget --no-check-certificate https://raw.github.com/newfies-dialer/lua-mstranslator/master/src/mstranslator.lua
+    wget --no-check-certificate https://raw.githubusercontent.com/newfies-dialer/lua-mstranslator/master/src/mstranslator.lua
     #TODO: use Luarocks to install lua packages
 
     #Upload audio files
@@ -773,7 +773,7 @@ func_django_newfiesdialer_install(){
 
     #Load Countries Dialcode
     #python manage.py load_country_dialcode
-    wget --no-check-certificate https://raw.github.com/areski/django-sms-gateway/master/sms/fixtures/example_gateways.json
+    wget --no-check-certificate https://raw.githubusercontent.com/areski/django-sms-gateway/master/sms/fixtures/example_gateways.json
     python manage.py loaddata example_gateways.json
     rm example_gateways.json
 
