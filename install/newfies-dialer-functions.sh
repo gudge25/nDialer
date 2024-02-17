@@ -179,7 +179,7 @@ func_install_dependencies(){
             #Used by PostgreSQL
             echo "deb http://apt-archive.postgresql.org/pub/repos/apt/ $DEBIANCODE-pgdg main" > /etc/apt/sources.list.d/pgdg.list
             wget --no-check-certificate --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc|apt-key add -
-            apt-get update
+            #apt-get update
 
             export LANGUAGE=en_US.UTF-8
             export LANG=en_US.UTF-8
