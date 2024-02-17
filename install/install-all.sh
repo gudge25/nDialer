@@ -122,15 +122,15 @@ case $DIST in
 esac
 
 
-if [ $INSTALL_FS = "yes" ]; then
-    #Install Freeswitch
-    cd /usr/src/
-    wget --no-check-certificate  https://raw.githubusercontent.com/gudge25/dialer/$BRANCH/install/install-freeswitch.sh -O install-freeswitch.sh
-    bash install-freeswitch.sh
-    /etc/init.d/freeswitch start
-fi
+# if [ $INSTALL_FS = "yes" ]; then
+#     #Install Freeswitch
+#     cd /usr/src/
+#     wget --no-check-certificate  https://raw.githubusercontent.com/gudge25/dialer/$BRANCH/install/install-freeswitch.sh -O install-freeswitch.sh
+#     bash install-freeswitch.sh
+#     /etc/init.d/freeswitch start
+# fi
 
-# #Install Newfies
-# cd /usr/src/
-# wget --no-check-certificate https://raw.githubusercontent.com/gudge25/dialer/$BRANCH/install/install-newfies.sh -O install-newfies.sh
-# bash install-newfies.sh
+#Install Newfies
+cd /usr/src/
+wget --no-check-certificate https://raw.githubusercontent.com/gudge25/dialer/$BRANCH/install/install-newfies.sh -O install-newfies.sh
+bash install-newfies.sh
