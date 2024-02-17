@@ -804,12 +804,13 @@ func_install_frontend(){
     echo ""
 
     #Install Depedencies
-    func_install_dependencies
+    #func_install_dependencies
     echo "==DONE=="
     exit 1
     #Install Redis
     func_install_redis
-
+    echo "==DONE=="
+    exit 1
     #Install RabbitMQ
     func_install_rabbitmq
 
