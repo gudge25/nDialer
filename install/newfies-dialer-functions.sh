@@ -963,7 +963,7 @@ func_install_redis() {
             echo "deb http://packages.dotdeb.org $DEBIANCODE all" > /etc/apt/sources.list.d/dotdeb.list
             echo "deb-src http://packages.dotdeb.org $DEBIANCODE all" >> /etc/apt/sources.list.d/dotdeb.list
             wget --no-check-certificate --quiet -O - http://www.dotdeb.org/dotdeb.gpg | apt-key add -
-            apt-get update
+            #apt-get update
             apt-get -y install redis-server
             /etc/init.d/redis-server restart
         ;;
