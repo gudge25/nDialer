@@ -31,13 +31,7 @@ fi
 
 #Get Scripts dependencies
 cd /usr/src/
-#rm newfies-dialer-functions.sh
-if [ -f "newfies-dialer-functions.sh" ]; then
-    rm "newfies-dialer-functions.sh"
-    echo "File newfies-dialer-functions.sh has been removed."
-else
-    echo "File newfies-dialer-functions.sh does not exist."
-fi
+rm newfies-dialer-functions.sh
 wget --no-check-certificate https://raw.githubusercontent.com/gudge25/dialer/$BRANCH/install/newfies-dialer-functions.sh -O newfies-dialer-functions.sh
 #Include cdr-stats install functions
 source newfies-dialer-functions.sh

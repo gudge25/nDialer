@@ -198,6 +198,11 @@ func_install_dependencies(){
             #Install Postgresql
             apt-get -y install libpq-dev
             apt-get -y install postgresql-9.3 postgresql-contrib-9.3
+            #If you are reintalling
+            #TODO use if check
+            service postgresql stop
+            pg_dropcluster --stop 9.3 main
+
             pg_createcluster 9.3 main --start
             /etc/init.d/postgresql start
 
@@ -211,10 +216,10 @@ func_install_dependencies(){
             #repeat flite install in case FS is on a different server
             apt-get -y install flite
 
-            #Install Node.js & NPM
-            apt-get -y install nodejs-legacy
-            curl -sL https://deb.nodesource.com/setup | bash -
-            apt-get install -y nodejs
+            # #Install Node.js & NPM
+            # apt-get -y install nodejs-legacy
+            # curl -sL https://deb.nodesource.com/setup | bash -
+            # apt-get install -y nodejs
 
             # cd /usr/src/ ; git clone https://github.com/joyent/node.git
             # # 'git tag' shows all available versions: select the latest stable.
@@ -296,6 +301,7 @@ func_install_dependencies(){
     esac
 
     #Install Luarocks from sources
+    echo "=Luarocks from sources="
     cd /usr/src
     rm -rf luarocks
     # wget --no-check-certificate http://luarocks.org/releases/luarocks-2.1.2.tar.gz
@@ -460,7 +466,7 @@ func_install_source(){
     rm -rf newfies-dialer
     mkdir /var/log/newfies
 
-    git clone -b $BRANCH git://github.com/newfies-dialer/newfies-dialer.git
+    git clone -b $BRANCH https://github.com/gudge25/newfies-dialer.git
     cd newfies-dialer
 
     #Install branch develop / callcenter
@@ -799,6 +805,7 @@ func_install_frontend(){
 
     #Install Depedencies
     func_install_dependencies
+    echo "==DONE=="
     exit 1
     #Install Redis
     func_install_redis
