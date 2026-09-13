@@ -65,13 +65,20 @@ COPY requirements/basic.txt requirements/django.txt /tmp/requirements/
 #     `six.with_metaclass(...)` on the same Field class - a pattern that
 #     only works with the older `with_metaclass` implementation and raises
 #     a metaclass conflict on six>=1.10. Pin an older six first.
+#  4. `django-qsstats-magic` (pulled in transitively by
+#     django-admin-tools-stats==0.5.5, which powers the admin dashboard)
+#     isn't pinned either, so pip resolves 1.1.0 - which does
+#     `from django.db.models.functions import Trunc`, a module that doesn't
+#     exist before Django 1.8. That 500s every request to /admin/ on this
+#     project's Django 1.7.7. Pin 0.7.2, the last release before that import
+#     was introduced.
 RUN grep -v '^psycopg2==' /tmp/requirements/basic.txt > /tmp/requirements/basic-docker.txt \
     && sed -e 's#git+http://github.com/pinax/django-mailer#git+http://github.com/pinax/django-mailer@1.2.6#' \
         /tmp/requirements/django.txt > /tmp/requirements/django-docker.txt \
     && pip install --no-cache-dir psycopg2-binary==2.8.6 six==1.9.0 \
     && pip install --no-cache-dir -r /tmp/requirements/basic-docker.txt \
     && pip install --no-cache-dir -r /tmp/requirements/django-docker.txt \
-    && pip install --no-cache-dir --no-deps six==1.9.0
+    && pip install --no-cache-dir --no-deps six==1.9.0 django-qsstats-magic==0.7.2
 
 # Two runtime compatibility shims, applied via sitecustomize.py (imported
 # automatically by the interpreter on every startup):
