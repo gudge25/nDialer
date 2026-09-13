@@ -138,6 +138,19 @@ RUN git clone --depth=1 https://github.com/keplerproject/md5.git \
     && make LUA_INC=/usr/include/lua5.2 \
     && make install LUA_INC=/usr/include/lua5.2
 
+# fsdebugger.lua does `require 'logging.file'` / `require 'logging'`
+# (LuaLogging) - not bundled by FreeSWITCH either. Pure Lua, no
+# compilation needed, just placed on Lua's default share path.
+RUN git clone --depth=1 https://github.com/lunarmodules/lualogging.git \
+    && install -m 644 lualogging/src/logging.lua /usr/local/share/lua/5.2/logging.lua \
+    && mkdir -p /usr/local/share/lua/5.2/logging \
+    && install -m 644 lualogging/src/logging/*.lua /usr/local/share/lua/5.2/logging/
+
+# fsdebugger.lua's LOGDIR - opened unconditionally at module load
+# (logging_file(LOGDIR .. "...", ...)), so a missing directory breaks the
+# require chain the same way a missing module does.
+RUN mkdir -p /var/log/newfies
+
 # Newfies-Dialer's own Lua application code (listener.lua, newfies.lua,
 # the fsm_callflow/database/session helpers under libs/) - what
 # lua.conf.xml's startup-script and settings_local.py's ESL_SCRIPT point at.
@@ -161,7 +174,7 @@ RUN sed -i -r \
 
 COPY docker/freeswitch/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh \
-    && chown -R freeswitch:freeswitch /usr/local/freeswitch /etc/freeswitch /usr/share/newfies-lua
+    && chown -R freeswitch:freeswitch /usr/local/freeswitch /etc/freeswitch /usr/share/newfies-lua /var/log/newfies
 
 WORKDIR /usr/local/freeswitch
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
