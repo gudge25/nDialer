@@ -85,8 +85,8 @@ urlpatterns += patterns('',
                         )
 
 
-handler404 = 'urls.custom_404_view'
-handler500 = 'urls.custom_500_view'
+handler404 = 'newfies_dialer.urls.custom_404_view'
+handler500 = 'newfies_dialer.urls.custom_500_view'
 
 
 def custom_404_view(request, template_name='404.html'):
