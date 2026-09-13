@@ -129,6 +129,15 @@ RUN git clone --depth=1 https://github.com/keplerproject/luafilesystem.git \
     && gcc -shared -fPIC -o lfs.so src/lfs.o \
     && install -m 755 lfs.so /usr/local/lib/lua/5.2/lfs.so
 
+# lfs_cache.lua also does `require 'md5'` (md5.sumhexa, to name cache
+# files) - same missing-module class, same Kepler Project family as
+# luasql/luafilesystem, so build it with its own Makefile+config like
+# luasql rather than a single gcc invocation.
+RUN git clone --depth=1 https://github.com/keplerproject/md5.git \
+    && cd md5 \
+    && make LUA_INC=/usr/include/lua5.2 \
+    && make install LUA_INC=/usr/include/lua5.2
+
 # Newfies-Dialer's own Lua application code (listener.lua, newfies.lua,
 # the fsm_callflow/database/session helpers under libs/) - what
 # lua.conf.xml's startup-script and settings_local.py's ESL_SCRIPT point at.
