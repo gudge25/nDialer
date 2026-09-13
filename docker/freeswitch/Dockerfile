@@ -156,6 +156,13 @@ RUN mkdir -p /var/log/newfies
 RUN wget -q https://raw.githubusercontent.com/kikito/inspect.lua/master/inspect.lua \
     -O /usr/local/share/lua/5.2/inspect.lua
 
+# tag_replace.lua's decodejson() does `require 'json'` (only json.decode is
+# ever called) - not bundled by FreeSWITCH's mod_lua either. rxi/json.lua is
+# a single pure-Lua file that returns a table with .encode/.decode under the
+# exact module name "json", same fix as inspect.lua above.
+RUN wget -q https://raw.githubusercontent.com/rxi/json.lua/master/json.lua \
+    -O /usr/local/share/lua/5.2/json.lua
+
 # Newfies-Dialer's own Lua application code (listener.lua, newfies.lua,
 # the fsm_callflow/database/session helpers under libs/) - what
 # lua.conf.xml's startup-script and settings_local.py's ESL_SCRIPT point at.
