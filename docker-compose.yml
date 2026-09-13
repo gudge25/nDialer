@@ -117,6 +117,14 @@ services:
     volumes:
       - freeswitch_recordings:/usr/local/freeswitch/recordings
       - freeswitch_db:/usr/local/freeswitch/db
+      # lua/libs/constant.lua hardcodes UPLOAD_DIR/FS_RECORDING_PATH to
+      # /usr/share/newfies/usermedia/ - the same path Django's MEDIA_ROOT
+      # uses. Campaign greeting audio is uploaded via the Django app into
+      # this volume, and FreeSWITCH (a separate container) needs to read
+      # it from the exact same path, or session:streamFile() finds
+      # nothing and the call flow falls through instead of playing it.
+      # Read-write since FreeSWITCH also writes call recordings here.
+      - media_data:/usr/share/newfies/usermedia
       # Gateway/trunk config. Note the real path is /etc/freeswitch/... ,
       # not /usr/local/freeswitch/conf/... - this image sets
       # --sysconfdir=/etc/freeswitch, which is what FreeSWITCH actually
