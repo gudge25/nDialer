@@ -1,0 +1,86 @@
+# App tier only: Django (gunicorn) + Celery worker/beat + Postgres + Redis,
+# behind nginx. FreeSWITCH is intentionally excluded - containerizing it
+# needs host networking for SIP/RTP and a direct ODBC link into `db`, which
+# doesn't fit cleanly alongside this stack. Point ESL_HOSTNAME/ESL_PORT at
+# wherever FreeSWITCH actually runs.
+
+x-app-image: &app-image
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+  image: newfies-dialer:latest
+  env_file:
+    - .env
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  volumes:
+    - static_data:/usr/share/newfies/static
+    - media_data:/usr/share/newfies/usermedia
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:9.6
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-newfies}
+      POSTGRES_USER: ${POSTGRES_USER:-newfies}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-newfies}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:6-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  web:
+    <<: *app-image
+    command: ["gunicorn", "newfies_dialer.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120"]
+
+  celery_worker:
+    <<: *app-image
+    environment:
+      RUN_MIGRATIONS: "false"
+      # CELERY_ACCEPT_CONTENT includes pickle (settings.py); celery refuses
+      # to run as root with pickle enabled unless this is set.
+      C_FORCE_ROOT: "1"
+    command: ["python", "manage.py", "celery", "worker", "-l", "info", "--without-mingle", "--autoscale=10,2"]
+
+  celery_beat:
+    <<: *app-image
+    environment:
+      RUN_MIGRATIONS: "false"
+    command: ["python", "manage.py", "celery", "beat", "-l", "info"]
+
+  nginx:
+    image: nginx:1.25-alpine
+    depends_on:
+      - web
+    ports:
+      - "${HTTP_PORT:-8000}:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_data:/usr/share/newfies/static:ro
+      - media_data:/usr/share/newfies/usermedia:ro
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_data:
+  media_data:

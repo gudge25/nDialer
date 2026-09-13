@@ -1,0 +1,14 @@
+.git
+.DS_Store
+.claude
+openspec
+*.pyc
+*.db
+newfies/usermedia/tts/*.*
+newfies/usermedia/recording/*.*
+docs/build
+build
+dist
+*.log
+bower_components
+.env

@@ -28,3 +28,5 @@ acapela*.lua
 *.ipynb
 bower_components
 *.pid
+.env
+.DS_Store

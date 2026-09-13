@@ -1,0 +1,60 @@
+#!/bin/bash
+set -euo pipefail
+
+DJANGO_SETTINGS_MODULE="newfies_dialer.settings_docker"
+export DJANGO_SETTINGS_MODULE
+
+cd /usr/share/newfies
+
+echo "Waiting for PostgreSQL at ${POSTGRES_HOST:-db}:${POSTGRES_PORT:-5432}..."
+python <<'PYEOF'
+import os
+import socket
+import time
+
+host = os.environ.get('POSTGRES_HOST', 'db')
+port = int(os.environ.get('POSTGRES_PORT', '5432'))
+
+for _ in range(60):
+    try:
+        socket.create_connection((host, port), timeout=2).close()
+        break
+    except socket.error:
+        time.sleep(2)
+else:
+    raise SystemExit('Timed out waiting for PostgreSQL at %s:%s' % (host, port))
+PYEOF
+echo "PostgreSQL is up."
+
+if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
+    python manage.py migrate --noinput
+    python manage.py collectstatic --noinput
+
+    if [ "${CREATE_DEFAULT_SUPERUSER:-true}" = "true" ]; then
+        DEFAULT_SUPERUSER_USERNAME="${DEFAULT_SUPERUSER_USERNAME:-admin}" \
+        DEFAULT_SUPERUSER_PASSWORD="${DEFAULT_SUPERUSER_PASSWORD:-admin123}" \
+        DEFAULT_SUPERUSER_EMAIL="${DEFAULT_SUPERUSER_EMAIL:-admin@example.com}" \
+        python manage.py shell <<'PYEOF'
+import os
+from django.contrib.auth.models import User
+
+username = os.environ['DEFAULT_SUPERUSER_USERNAME']
+password = os.environ['DEFAULT_SUPERUSER_PASSWORD']
+email = os.environ['DEFAULT_SUPERUSER_EMAIL']
+
+user, created = User.objects.get_or_create(
+    username=username,
+    defaults={'email': email, 'is_staff': True, 'is_superuser': True, 'is_active': True},
+)
+user.email = email
+user.is_staff = True
+user.is_superuser = True
+user.is_active = True
+user.set_password(password)
+user.save()
+print('%s default superuser %r' % ('Created' if created else 'Ensured', username))
+PYEOF
+    fi
+fi
+
+exec "$@"
