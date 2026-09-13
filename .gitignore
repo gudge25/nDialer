@@ -30,3 +30,8 @@ bower_components
 *.pid
 .env
 .DS_Store
+
+# Real gateway/trunk configs (SIP credentials) - keep example.xml as a
+# template, ignore anything else dropped in here.
+freeswitch-conf/sip_profiles/external/*
+!freeswitch-conf/sip_profiles/external/example.xml

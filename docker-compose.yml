@@ -117,6 +117,14 @@ services:
     volumes:
       - freeswitch_recordings:/usr/local/freeswitch/recordings
       - freeswitch_db:/usr/local/freeswitch/db
+      # Gateway/trunk config. Note the real path is /etc/freeswitch/... ,
+      # not /usr/local/freeswitch/conf/... - this image sets
+      # --sysconfdir=/etc/freeswitch, which is what FreeSWITCH actually
+      # reads at runtime; /usr/local/freeswitch/conf/ only applies to a
+      # vanilla build without a custom sysconfdir. Drop gateway XML files
+      # (e.g. call-labs.xml) in ./freeswitch-conf/sip_profiles/external/ on
+      # the host, then `fs_cli -x reloadxml` or restart this container.
+      - ./freeswitch-conf/sip_profiles/external:/etc/freeswitch/sip_profiles/external
     restart: unless-stopped
 
 volumes:
