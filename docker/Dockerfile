@@ -25,8 +25,11 @@ RUN bower install --allow-root --config.interactive=false
 FROM python:2.7-slim-buster
 
 # Newfies-Dialer app tier image (Django/gunicorn + Celery worker/beat).
-# FreeSWITCH is NOT built here; it's assumed to run externally (see
-# docker-compose.yml comments) and this image only talks to it over ESL.
+# FreeSWITCH is NOT built here (see docker/freeswitch/Dockerfile) - but this
+# image does need the ESL Python bindings from that same source tree
+# (newfies/dialer_cdr/tasks.py:dial_out does `import ESL` to originate
+# calls), pulled in below via COPY --from. Build docker/freeswitch/Dockerfile
+# first and tag it newfies-freeswitch:v1.4, or this COPY fails.
 
 # Debian buster is EOL; its repos moved to archive.debian.org.
 RUN sed -i \
@@ -104,6 +107,11 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 RUN mkdir -p /usr/share/newfies/static /usr/share/newfies/usermedia
 COPY --from=bower-builder /build/bower_components /usr/share/newfies/components/bower_components
+
+# ESL Python bindings, built by docker/freeswitch/Dockerfile from the same
+# FreeSWITCH v1.4 source tree (libs/esl/python: `make pymod`).
+COPY --from=newfies-freeswitch:v1.4 /usr/src/freeswitch/libs/esl/python/ESL.py /usr/local/lib/python2.7/site-packages/ESL.py
+COPY --from=newfies-freeswitch:v1.4 /usr/src/freeswitch/libs/esl/python/_ESL.so /usr/local/lib/python2.7/site-packages/_ESL.so
 
 ENV DJANGO_SETTINGS_MODULE=newfies_dialer.settings_docker
 ENV PYTHONUNBUFFERED=1

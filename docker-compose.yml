@@ -1,8 +1,11 @@
-# App tier only: Django (gunicorn) + Celery worker/beat + Postgres + Redis,
-# behind nginx. FreeSWITCH is intentionally excluded - containerizing it
-# needs host networking for SIP/RTP and a direct ODBC link into `db`, which
-# doesn't fit cleanly alongside this stack. Point ESL_HOSTNAME/ESL_PORT at
-# wherever FreeSWITCH actually runs.
+# Full stack: nginx + Django (gunicorn) + Celery worker/beat + Postgres +
+# Redis + FreeSWITCH. FreeSWITCH runs with network_mode: host (SIP/RTP need
+# real host ports, not NAT'd bridge ports), so it must be built and started
+# separately from the rest:
+#   docker compose build freeswitch && docker compose up -d freeswitch
+#   docker compose build && docker compose up -d
+# The app image's Dockerfile does `COPY --from=newfies-freeswitch:v1.4` (the
+# ESL Python bindings) at build time, so `freeswitch` must be built first.
 
 x-app-image: &app-image
   build:
@@ -19,6 +22,12 @@ x-app-image: &app-image
   volumes:
     - static_data:/usr/share/newfies/static
     - media_data:/usr/share/newfies/usermedia
+  # FreeSWITCH runs with network_mode: host (see below), so from these
+  # bridge-network containers it's reachable at host.docker.internal -
+  # needs an explicit gateway alias on Linux (Docker Desktop provides this
+  # automatically, native Linux engines don't).
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
   restart: unless-stopped
 
 services:
@@ -28,6 +37,12 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-newfies}
       POSTGRES_USER: ${POSTGRES_USER:-newfies}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    # Published to the host's loopback only (not 0.0.0.0) so the
+    # host-networked freeswitch container can reach it at 127.0.0.1:5432
+    # for listener.lua's direct luasql.postgres connection - not for
+    # access from outside this machine.
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -79,7 +94,34 @@ services:
       - media_data:/usr/share/newfies/usermedia:ro
     restart: unless-stopped
 
+  freeswitch:
+    build:
+      context: .
+      dockerfile: docker/freeswitch/Dockerfile
+    image: newfies-freeswitch:v1.4
+    network_mode: host
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # 127.0.0.1 because network_mode: host - db is published to the
+      # host's loopback above for exactly this.
+      DBHOST: 127.0.0.1
+      DBPORT: 5432
+      DBNAME: ${POSTGRES_DB:-newfies}
+      DBUSER: ${POSTGRES_USER:-newfies}
+      DBPASS: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      ESL_SECRET: ${ESL_SECRET:?set ESL_SECRET in .env - it is reachable beyond localhost here}
+      ESL_LISTEN_IP: 0.0.0.0
+      TTS_ENGINE: ${TTS_ENGINE:-flite}
+    volumes:
+      - freeswitch_recordings:/usr/local/freeswitch/recordings
+      - freeswitch_db:/usr/local/freeswitch/db
+    restart: unless-stopped
+
 volumes:
+  freeswitch_recordings:
+  freeswitch_db:
   postgres_data:
   redis_data:
   static_data:
