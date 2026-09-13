@@ -107,6 +107,20 @@ CC = gcc
 EOF
 RUN make && make install
 
+# lua/libs/dbhandler.lua and dbh_fs.lua do `require 'cmsgpack'` (MessagePack
+# pack/unpack for caching row data) - a library FreeSWITCH itself only
+# started bundling into mod_lua in later versions (1.6+); this v1.4 source
+# tree has no such thing, so newfies.lua's require chain
+# (newfies -> fsm_callflow -> database -> dbhandler) errored out on every
+# call before ever reaching session:answer()/streamFile() - the call would
+# just hang up with no greeting. Build the standalone antirez/lua-cmsgpack
+# instead, installed where lua.conf.xml's module-directory already looks.
+WORKDIR /usr/src
+RUN git clone --depth=1 https://github.com/antirez/lua-cmsgpack.git \
+    && cd lua-cmsgpack \
+    && gcc -O2 -fPIC -shared -I/usr/include/lua5.2 -o cmsgpack.so lua_cmsgpack.c \
+    && install -m 755 cmsgpack.so /usr/local/lib/lua/5.2/cmsgpack.so
+
 # Newfies-Dialer's own Lua application code (listener.lua, newfies.lua,
 # the fsm_callflow/database/session helpers under libs/) - what
 # lua.conf.xml's startup-script and settings_local.py's ESL_SCRIPT point at.
