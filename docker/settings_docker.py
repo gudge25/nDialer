@@ -13,7 +13,10 @@ from settings import *  # noqa
 DEBUG = os.environ.get('DJANGO_DEBUG', 'false').lower() == 'true'
 TEMPLATE_DEBUG = DEBUG
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', SECRET_KEY)
+try:
+    SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+except KeyError:
+    raise RuntimeError('set DJANGO_SECRET_KEY in .env - see .env.example')
 
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',') if h.strip()]
 
