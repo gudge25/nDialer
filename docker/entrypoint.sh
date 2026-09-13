@@ -55,13 +55,15 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'newfies_dialer.settings_docker'
 django.setup()
 
 from django.contrib.auth.models import User
-from user_profile.models import UserProfile
-from dialer_settings.models import DialerSetting
 
 username = os.environ['DEFAULT_SUPERUSER_USERNAME']
 password = os.environ['DEFAULT_SUPERUSER_PASSWORD']
 email = os.environ['DEFAULT_SUPERUSER_EMAIL']
 
+# This account is for /admin/ (configuring the system) - it deliberately
+# has no UserProfile/DialerSetting, since it isn't meant to use the
+# customer-facing frontend as a tenant. Seeing the "settings are not
+# configured properly" banner there is expected, not a bug.
 user, created = User.objects.get_or_create(
     username=username,
     defaults={'email': email, 'is_staff': True, 'is_superuser': True, 'is_active': True},
@@ -73,21 +75,6 @@ user.is_active = True
 user.set_password(password)
 user.save()
 print('%s default superuser %r' % ('Created' if created else 'Ensured', username))
-
-# The frontend shows a "settings are not configured properly" banner
-# (context_processors.newfies_common_template_variable) for any logged-in
-# user without a UserProfile pointing at a DialerSetting.
-dialersetting = DialerSetting.objects.first()
-if dialersetting is not None:
-    profile, profile_created = UserProfile.objects.get_or_create(
-        user=user, defaults={'dialersetting': dialersetting},
-    )
-    if not profile.dialersetting_id:
-        profile.dialersetting = dialersetting
-        profile.save()
-    print('%s UserProfile for %r' % ('Created' if profile_created else 'Ensured', username))
-else:
-    print('No DialerSetting found - skipping UserProfile setup for %r' % username)
 PYEOF
     fi
 fi
