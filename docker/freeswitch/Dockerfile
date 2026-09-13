@@ -151,6 +151,11 @@ RUN git clone --depth=1 https://github.com/lunarmodules/lualogging.git \
 # require chain the same way a missing module does.
 RUN mkdir -p /var/log/newfies
 
+# fsdebugger.lua:msg_inspect also does `require 'inspect'` (kikito/inspect,
+# pretty-prints tables for debug logging) - single pure-Lua file, same fix.
+RUN wget -q https://raw.githubusercontent.com/kikito/inspect.lua/master/inspect.lua \
+    -O /usr/local/share/lua/5.2/inspect.lua
+
 # Newfies-Dialer's own Lua application code (listener.lua, newfies.lua,
 # the fsm_callflow/database/session helpers under libs/) - what
 # lua.conf.xml's startup-script and settings_local.py's ESL_SCRIPT point at.
