@@ -30,13 +30,33 @@ if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
     python manage.py migrate --noinput
     python manage.py collectstatic --noinput
 
+    # install/newfies-dialer-functions.sh (func_django_newfiesdialer_install)
+    # loads these same fixtures as part of a normal bare-metal install - none
+    # of them are named `initial_data`, so syncdb/migrate never loads them
+    # automatically. Without this, every tenant's UserProfile.dialersetting
+    # has nothing to point at.
+    python manage.py loaddata appointment/fixtures/default_appointment.json
+    python manage.py loaddata dialer_gateway/fixtures/default_dialer_gateway.json
+    python manage.py loaddata dialer_settings/fixtures/default_dialer_settings.json
+
     if [ "${CREATE_DEFAULT_SUPERUSER:-true}" = "true" ]; then
+        # Plain `python`, not `manage.py shell` - the latter always drives an
+        # InteractiveConsole (even fed via heredoc/non-tty stdin), which
+        # requires a blank line to close every multi-line block; get that
+        # wrong and it silently mis-parses instead of erroring loudly.
         DEFAULT_SUPERUSER_USERNAME="${DEFAULT_SUPERUSER_USERNAME:-admin}" \
         DEFAULT_SUPERUSER_PASSWORD="${DEFAULT_SUPERUSER_PASSWORD:-admin123}" \
         DEFAULT_SUPERUSER_EMAIL="${DEFAULT_SUPERUSER_EMAIL:-admin@example.com}" \
-        python manage.py shell <<'PYEOF'
+        python <<'PYEOF'
 import os
+
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'newfies_dialer.settings_docker')
+django.setup()
+
 from django.contrib.auth.models import User
+from user_profile.models import UserProfile
+from dialer_settings.models import DialerSetting
 
 username = os.environ['DEFAULT_SUPERUSER_USERNAME']
 password = os.environ['DEFAULT_SUPERUSER_PASSWORD']
@@ -53,6 +73,21 @@ user.is_active = True
 user.set_password(password)
 user.save()
 print('%s default superuser %r' % ('Created' if created else 'Ensured', username))
+
+# The frontend shows a "settings are not configured properly" banner
+# (context_processors.newfies_common_template_variable) for any logged-in
+# user without a UserProfile pointing at a DialerSetting.
+dialersetting = DialerSetting.objects.first()
+if dialersetting is not None:
+    profile, profile_created = UserProfile.objects.get_or_create(
+        user=user, defaults={'dialersetting': dialersetting},
+    )
+    if not profile.dialersetting_id:
+        profile.dialersetting = dialersetting
+        profile.save()
+    print('%s UserProfile for %r' % ('Created' if profile_created else 'Ensured', username))
+else:
+    print('No DialerSetting found - skipping UserProfile setup for %r' % username)
 PYEOF
     fi
 fi
