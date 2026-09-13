@@ -121,6 +121,14 @@ RUN git clone --depth=1 https://github.com/antirez/lua-cmsgpack.git \
     && gcc -O2 -fPIC -shared -I/usr/include/lua5.2 -o cmsgpack.so lua_cmsgpack.c \
     && install -m 755 cmsgpack.so /usr/local/lib/lua/5.2/cmsgpack.so
 
+# lua/libs/lfs_cache.lua does `require 'lfs'` (LuaFileSystem) - not bundled
+# by FreeSWITCH either. Same fix, same standard/well-known upstream source.
+RUN git clone --depth=1 https://github.com/keplerproject/luafilesystem.git \
+    && cd luafilesystem \
+    && gcc -O2 -fPIC -c -o src/lfs.o -I/usr/include/lua5.2 src/lfs.c \
+    && gcc -shared -fPIC -o lfs.so src/lfs.o \
+    && install -m 755 lfs.so /usr/local/lib/lua/5.2/lfs.so
+
 # Newfies-Dialer's own Lua application code (listener.lua, newfies.lua,
 # the fsm_callflow/database/session helpers under libs/) - what
 # lua.conf.xml's startup-script and settings_local.py's ESL_SCRIPT point at.
