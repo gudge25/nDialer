@@ -78,6 +78,26 @@ jobs:
           grep -v '^psycopg2==' requirements/basic.txt > /tmp/basic-ci.txt
           pip install --no-cache-dir -r /tmp/basic-ci.txt
 
+      - name: Install django requirements
+        # Same two fixes as docker/Dockerfile:
+        #  1. git+http://github.com/pinax/django-mailer has no ref, so it
+        #     always resolves to current master - which has moved to a
+        #     PEP 517 build requiring setuptools>=61.2 and no longer
+        #     installs under Python 2.7. Pin it to tag 1.2.6, the last
+        #     pre-Python3-only release.
+        #  2. django-qsstats-magic (pulled in transitively by
+        #     django-admin-tools-stats==0.5.5) isn't pinned, so pip
+        #     resolves 1.1.0 - which does
+        #     `from django.db.models.functions import Trunc`, a module
+        #     that doesn't exist before Django 1.8. That 500s every
+        #     request to /admin/ on this project's Django 1.7.7. Pin
+        #     0.7.2, the last release before that import was introduced.
+        run: |
+          sed -e 's#git+http://github.com/pinax/django-mailer#git+http://github.com/pinax/django-mailer@1.2.6#' \
+            requirements/django.txt > /tmp/django-ci.txt
+          pip install --no-cache-dir -r /tmp/django-ci.txt
+          pip install --no-cache-dir --no-deps six==1.9.0 django-qsstats-magic==0.7.2
+
       - name: Install test dependencies
         # rudolf==0.3 (the nose --with-color plugin) ships a malformed
         # install_requires ("nose==dev,>=0.1.0") on PyPI that pip can't
