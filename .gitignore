@@ -17,6 +17,7 @@ newfies/usermedia/recording/*.*
 build/
 dist/
 coverage_info
+coverage.xml
 output.html
 amd*.lua
 *.log
