@@ -29,22 +29,22 @@ class UserProfileAdminView(BaseAuthenticatedClient):
 
     def test_admin_manager_view_list(self):
         """Test Function to check admin customer list"""
-        response = self.client.get("/admin/auth/manager/")
+        response = self.client.get("/admin/user_profile/manager/")
         self.assertEqual(response.status_code, 200)
 
     def test_admin_manager_view_add(self):
         """Test Function to check admin customer add"""
-        response = self.client.get("/admin/auth/manager/add/")
+        response = self.client.get("/admin/user_profile/manager/add/")
         self.assertEqual(response.status_code, 200)
 
     def test_admin_calendaruser_view_list(self):
         """Test Function to check admin customer list"""
-        response = self.client.get("/admin/auth/calendaruser/")
+        response = self.client.get("/admin/user_profile/calendaruser/")
         self.assertEqual(response.status_code, 200)
 
     def test_admin_calendaruser_view_add(self):
         """Test Function to check admin customer add"""
-        response = self.client.get("/admin/auth/calendaruser/add/")
+        response = self.client.get("/admin/user_profile/calendaruser/add/")
         self.assertEqual(response.status_code, 200)
 
 
