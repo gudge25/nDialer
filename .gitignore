@@ -35,3 +35,6 @@ bower_components
 # template, ignore anything else dropped in here.
 freeswitch-conf/sip_profiles/external/*
 !freeswitch-conf/sip_profiles/external/example.xml
+
+
+.claude/settings.local.json
