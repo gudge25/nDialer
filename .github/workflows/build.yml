@@ -53,7 +53,7 @@ jobs:
             /etc/apt/sources.list
           echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
           apt-get update
-          apt-get install -y flite
+          apt-get install -y flite libpq-dev
 
       - name: Install basic requirements
         run: |
