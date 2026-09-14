@@ -34,14 +34,19 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
 
+    # host networking so the job container and the redis service share the
+    # runner's network namespace - settings.py hardcodes redis_cache's
+    # LOCATION as '127.0.0.1:6379' with no env override, and on the default
+    # bridge network service containers are only reachable by service name
+    # (e.g. "redis"), not via 127.0.0.1, from another container.
     container:
       image: python:2.7
+      options: --network host
 
     services:
       redis:
         image: redis:6-alpine
-        ports:
-          - 6379:6379
+        options: --network host
 
     steps:
       - uses: actions/checkout@v4
