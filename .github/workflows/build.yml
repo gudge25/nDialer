@@ -46,18 +46,37 @@ jobs:
           pip --version
 
       - name: Install system dependencies
+        # Mirrors docker/Dockerfile: Debian buster is EOL, so its repos
+        # moved to archive.debian.org.
         run: |
           sed -i \
-            -e 's|deb.debian.org/debian|archive.debian.org/debian|g' \
+            -e 's|deb.debian.org/debian |archive.debian.org/debian |g' \
             -e 's|security.debian.org/debian-security|archive.debian.org/debian-security|g' \
+            -e '/buster-updates/d' \
             /etc/apt/sources.list
           echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
           apt-get update
-          apt-get install -y flite libpq-dev
+          apt-get install -y --no-install-recommends \
+            build-essential \
+            git \
+            libpq-dev \
+            libjpeg-dev \
+            zlib1g-dev \
+            libxml2-dev \
+            libxslt1-dev \
+            libffi-dev \
+            libssl-dev \
+            flite
 
       - name: Install basic requirements
+        # psycopg2==2.6 can't parse the version string of any libpq newer
+        # than 9.x, so it fails to build against this base image. Same fix
+        # as docker/Dockerfile: use psycopg2-binary instead, without
+        # touching the project's actual requirements files.
         run: |
-          pip install -r requirements/basic.txt
+          pip install --no-cache-dir psycopg2-binary==2.8.6 six==1.9.0
+          grep -v '^psycopg2==' requirements/basic.txt > /tmp/basic-ci.txt
+          pip install --no-cache-dir -r /tmp/basic-ci.txt
 
       - name: Install test dependencies
         run: |
@@ -66,6 +85,17 @@ jobs:
       - name: Install project
         run: |
           pip install -e .
+
+      - name: Apply runtime compatibility shims
+        # Same fix as docker/Dockerfile's sitecustomize.py: kombu==3.0.24
+        # does `from uuid import _uuid_generate_random`, an attribute
+        # provided by the legacy uuid==1.30 PyPI backport (also pinned in
+        # basic.txt) - but Python 2.7's stdlib uuid module always wins on
+        # sys.path and has no such attribute, so importing kombu/celery
+        # fails on any modern Python 2.7.
+        run: |
+          printf 'import uuid\nif not hasattr(uuid, "_uuid_generate_random"):\n    uuid._uuid_generate_random = None\n' \
+            > /usr/local/lib/python2.7/site-packages/sitecustomize.py
 
       - name: Create database directory
         run: |
