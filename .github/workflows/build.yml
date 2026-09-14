@@ -165,6 +165,11 @@ jobs:
         run: |
           coverage run --source=newfies $(command -v py.test) newfies/ -v -s
           coverage xml -o coverage.xml
+          # coverage bakes this container's absolute cwd (/__w/nDialer/nDialer)
+          # into <source>, which doesn't exist on the "Build and analyze" job's
+          # plain (non-container) runner - rewrite it to a relative path that
+          # resolves in both.
+          sed -i 's#<source>[^<]*</source>#<source>.</source>#' coverage.xml
 
       - name: Upload coverage report
         if: always()
