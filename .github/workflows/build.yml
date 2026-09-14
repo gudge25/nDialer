@@ -12,11 +12,17 @@ jobs:
   build:
     name: Build and analyze
     runs-on: ubuntu-latest
+    needs: test
 
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+        continue-on-error: true # test job may not have produced one (e.g. it failed before running tests)
 
       - uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
         env:
@@ -112,7 +118,7 @@ jobs:
         # last 1.4.x release, which still satisfies pytest-xdist's
         # py>=1.4.25 floor.
         run: |
-          pip install --no-cache-dir nose==1.3.7 py==1.4.31
+          pip install --no-cache-dir nose==1.3.7 py==1.4.31 coverage==4.5.4
           grep -v '^rudolf==' requirements/test.txt > /tmp/test-ci.txt
           pip install --no-cache-dir --no-deps rudolf==0.3
           pip install --no-cache-dir -r /tmp/test-ci.txt
@@ -148,7 +154,23 @@ jobs:
         # `manage.py test` nose-based runner) - py.test doesn't recognize
         # them and no installed plugin registers them for pytest either.
         # pytest's own verbosity flag is -v.
+        #
+        # Run under coverage.py so the "Build and analyze" job can feed
+        # real coverage into SonarQube. --source=newfies scopes it to app
+        # code (not site-packages); coverage.xml's paths come out relative
+        # to this directory (repo root), matching how the build job checks
+        # the repo out too.
         env:
           DJANGO_SETTINGS_MODULE: newfies_dialer.settings_test
         run: |
-          py.test newfies/ -v -s
+          coverage run --source=newfies $(command -v py.test) newfies/ -v -s
+          coverage xml -o coverage.xml
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 1
+          if-no-files-found: ignore
