@@ -136,7 +136,12 @@ jobs:
           mkdir -p newfies/database
 
       - name: Run tests
+        # --verbosity=2, --with-xtraceback and --with-color are nose flags
+        # (see newfies/runtests.py's usage comment, written for the old
+        # `manage.py test` nose-based runner) - py.test doesn't recognize
+        # them and no installed plugin registers them for pytest either.
+        # pytest's own verbosity flag is -v.
         env:
           DJANGO_SETTINGS_MODULE: newfies_dialer.settings_test
         run: |
-          py.test newfies/ --verbosity=2 -s --with-xtraceback --with-color
+          py.test newfies/ -v -s
