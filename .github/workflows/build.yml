@@ -117,10 +117,6 @@ jobs:
           pip install --no-cache-dir --no-deps rudolf==0.3
           pip install --no-cache-dir -r /tmp/test-ci.txt
 
-      - name: Install project
-        run: |
-          pip install -e .
-
       - name: Apply runtime compatibility shims
         # Same fix as docker/Dockerfile's sitecustomize.py: kombu==3.0.24
         # does `from uuid import _uuid_generate_random`, an attribute
