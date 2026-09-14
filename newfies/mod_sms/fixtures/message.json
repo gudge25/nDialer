@@ -10,7 +10,7 @@
             "content":"this is test",
             "gateway_charge":null,
             "send_date":"2013-01-03T14:55:09.595",
-            "content_type":35,
+            "content_type":["survey", "survey"],
             "sender_number":"02956",
             "gateway_message_id":null,
             "billed":false,

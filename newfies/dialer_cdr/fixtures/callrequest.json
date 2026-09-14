@@ -23,7 +23,7 @@
         "last_attempt_time": null,
         "aleg_gateway": 1,
         "user": 2,
-        "content_type": 69,
+        "content_type": ["survey", "survey"],
         "call_type": 1,
         "hangup_cause": "",
         "timelimit": 3600,
