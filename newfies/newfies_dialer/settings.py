@@ -333,6 +333,17 @@ AUTH_PROFILE_MODULE = 'user_profile.UserProfile'
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login/'
 
+# Self-service password reset is disabled unconditionally (unpatched CVE-2019-19844
+# on this Django version); self-registration is opt-in and off by default.
+ALLOW_SELF_REGISTRATION = False
+
+# django-registration-redux settings: never mount registration.auth_urls (that's
+# where the unpatched password_reset* views live - login/logout/password_change
+# are mounted separately, directly, in newfies_dialer/urls.py). Self-registration
+# itself follows the flag above.
+INCLUDE_AUTH_URLS = False
+INCLUDE_REGISTER_URL = ALLOW_SELF_REGISTRATION
+
 # MEMCACHE
 # ========
 # CACHES = {

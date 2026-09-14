@@ -16,7 +16,7 @@ from django.utils.translation import ugettext_lazy as _
 from dialer_campaign.models import Campaign
 from frontend.constants import SEARCH_TYPE
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Submit, HTML
+from crispy_forms.layout import Layout, Div, Submit
 from crispy_forms.bootstrap import FormActions
 
 
@@ -41,7 +41,6 @@ class LoginForm(forms.Form):
             ),
             FormActions(
                 Submit('submit', 'Login'),
-                HTML('<a class="btn btn-warning" href="/password_reset/">%s?</a>' % _('Forgot password')),
             ),
         )
 

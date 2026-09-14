@@ -13,6 +13,12 @@ from settings import *  # noqa
 DEBUG = os.environ.get('DJANGO_DEBUG', 'false').lower() == 'true'
 TEMPLATE_DEBUG = DEBUG
 
+ALLOW_SELF_REGISTRATION = os.environ.get('ALLOW_SELF_REGISTRATION', 'false').lower() == 'true'
+# settings.py sets INCLUDE_REGISTER_URL from its own (unset) ALLOW_SELF_REGISTRATION
+# default; `from settings import *` copied that value, so it must be re-derived here
+# from the env-backed flag above rather than left as the inherited default.
+INCLUDE_REGISTER_URL = ALLOW_SELF_REGISTRATION
+
 try:
     SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 except KeyError:

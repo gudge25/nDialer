@@ -17,7 +17,8 @@ from dialer_campaign.function_def import user_dialer_setting_msg
 
 
 def newfies_version(request):
-    return {'newfies_version': newfies_dialer.__version__, 'SURVEYDEV': settings.SURVEYDEV}
+    return {'newfies_version': newfies_dialer.__version__, 'SURVEYDEV': settings.SURVEYDEV,
+            'ALLOW_SELF_REGISTRATION': settings.ALLOW_SELF_REGISTRATION}
 
 
 def newfies_common_template_variable(request):

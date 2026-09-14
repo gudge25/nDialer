@@ -14,6 +14,8 @@
 from django.conf.urls import handler404, handler500, \
     include, patterns, url
 from django.conf import settings
+from django.contrib.auth import views as auth_views
+from django.core.urlresolvers import reverse_lazy
 from apirest.urls import urlpatterns as urlpatterns_apirest
 from agent.api_urls import urlpatterns as urlpatterns_agent_apirest
 from appointment.urls import urlpatterns as urlpatterns_appointment
@@ -45,6 +47,30 @@ js_info_dict = {
                  'audiofield'),
 }
 
+# Self-service password reset is unconditionally unavailable: Django is pinned at
+# 1.7.7, which predates the CVE-2019-19844 fix for PasswordResetForm.get_users().
+# login/logout/password_change are mounted here directly (same views, regexes and
+# kwargs django-registration-redux's own registration.auth_urls would use) instead
+# of including registration.auth_urls, which is where password_reset* lives.
+# settings.INCLUDE_AUTH_URLS=False keeps registration.backends.default.urls (below)
+# from pulling registration.auth_urls back in on its own.
+accounts_urlpatterns = patterns('',
+                                url(r'^login/$', auth_views.login,
+                                    {'template_name': 'registration/login.html'},
+                                    name='auth_login'),
+                                url(r'^logout/$', auth_views.logout,
+                                    {'template_name': 'registration/logout.html'},
+                                    name='auth_logout'),
+                                url(r'^password/change/$', auth_views.password_change,
+                                    {'post_change_redirect': reverse_lazy('auth_password_change_done')},
+                                    name='auth_password_change'),
+                                url(r'^password/change/done/$', auth_views.password_change_done,
+                                    name='auth_password_change_done'),
+                                )
+accounts_urlpatterns += patterns('',
+                                 (r'', include('registration.backends.default.urls')),
+                                 )
+
 urlpatterns = patterns('',
                        (r'^logout/$', 'frontend.views.logout_view'),
                        (r'^admin/', include(admin.site.urls)),
@@ -56,7 +82,7 @@ urlpatterns = patterns('',
                        # (r'^sentry/', include('sentry.web.urls')),
                        # (r'^%s/' % settings.DAJAXICE_MEDIA_PREFIX, include('dajaxice.urls')),
                        url(dajaxice_config.dajaxice_url, include('dajaxice.urls')),
-                       (r'^accounts/', include('registration.backends.default.urls')),
+                       (r'^accounts/', include(accounts_urlpatterns)),
                        )
 
 if settings.DEBUG:

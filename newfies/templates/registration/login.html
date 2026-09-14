@@ -14,8 +14,10 @@
         </div>
     </form>
 
-    <p>{% trans "Forgot your password?" %} <a href="{% url 'auth_password_reset' %}">{% trans "Reset it" %}</a>.</p>
+    <p>{% trans "Forgot your password?" %} {% trans "Please email support." %}</p>
+    {% if ALLOW_SELF_REGISTRATION %}
     <p>{% trans "Not a member?" %} <a href="{% url 'registration_register' %}">{% trans "Register" %}</a>.</p>
+    {% endif %}
 {% endblock %}
 
 

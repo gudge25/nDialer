@@ -60,8 +60,10 @@
                     (<a href="{% url 'auth_logout' %}">{% trans "Log out" %}</a> |
                     <a href="{% url 'auth_password_change' %}">{% trans "Change password" %}</a>)
                 {% else %}
-                    <a href="{% url 'auth_login' %}">{% trans "Log In" %}</a> |
-                    {% trans "Not a member?" %} <a href="{% url 'registration_register' %}">{% trans "Register" %}</a>.
+                    <a href="{% url 'auth_login' %}">{% trans "Log In" %}</a>
+                    {% if ALLOW_SELF_REGISTRATION %}
+                    | {% trans "Not a member?" %} <a href="{% url 'registration_register' %}">{% trans "Register" %}</a>.
+                    {% endif %}
                 {% endif %}
 
                 <h1>Newfies-Dialer <small>{% trans "voice broadcasting solution"|title %}</small></h1>
