@@ -86,22 +86,16 @@ def importcontact_custom_sql(campaign_id, phonebook_id):
         # Check how many we are going to import and how many exist for that campaign already
         imported_subscriber_count = Subscriber.objects.filter(campaign_id=campaign_id).count()
         allowed_import = max_subr_cpg - imported_subscriber_count
-        if allowed_import > 0:
-            # handle negative value for to_import
-            limit_import = 'LIMIT %d' % allowed_import
-        else:
-            limit_import = 'LIMIT 0'
+        # handle negative value for to_import
+        limit_value = allowed_import if allowed_import > 0 else 0
     else:
-        limit_import = ''
+        # LIMIT NULL is equivalent to omitting LIMIT entirely in PostgreSQL
+        limit_value = None
 
     from django.db import connection
     cursor = connection.cursor()
     if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql_psycopg2':
         # Data insert operation - http://stackoverflow.com/questions/12451053/django-bulk-create-with-ignore-rows-that-cause-integrityerror
-        # limit_import is a fixed 'LIMIT <int>'/'LIMIT 0'/'' fragment built
-        # above from internal counts, not request input, so it is safe to
-        # keep as literal SQL text; campaign_id/phonebook_id are bound as
-        # query parameters below.
         sqlimport = \
             "LOCK TABLE dialer_subscriber IN EXCLUSIVE MODE;" \
             "INSERT INTO dialer_subscriber "\
@@ -110,8 +104,8 @@ def importcontact_custom_sql(campaign_id, phonebook_id):
             "WHERE phonebook_id=%s AND dialer_contact.status=1 AND NOT EXISTS (" \
             "SELECT 1 FROM dialer_subscriber WHERE "\
             "dialer_subscriber.campaign_id=%s "\
-            "AND dialer_contact.id = dialer_subscriber.contact_id ) " + limit_import + ";"
-        sqlparams = [campaign_id, phonebook_id, campaign_id]
+            "AND dialer_contact.id = dialer_subscriber.contact_id ) LIMIT %s;"
+        sqlparams = [campaign_id, phonebook_id, campaign_id, limit_value]
     else:
         # MYSQL Support removed
         logger.error("Database not supported (%s)" % settings.DATABASES['default']['ENGINE'])
