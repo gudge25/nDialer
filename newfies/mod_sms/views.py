@@ -50,7 +50,8 @@ redirect_url_to_smscampaign_list = '/sms_campaign/'
 def _to_valid_ids(values):
     """Convert request values to ints, silently dropping ones that aren't
     valid integers (e.g. str.isdigit() is True for non-ASCII digit-like
-    characters, such as u'²', that int() still rejects)."""
+    characters, such as a Unicode superscript-two digit, that int() still
+    rejects)."""
     ids = []
     for value in values:
         try:
