@@ -322,10 +322,7 @@ class DialerContactCeleryTaskTestCase(TestCase):
             def execute(self, sql, params=None):
                 self.calls.append((sql, params))
 
-        fake_cursor = FakeCursor()
-        original_cursor = connection.cursor
-        connection.cursor = lambda: fake_cursor
-
+        # Real DB access (setup) happens before the cursor is ever patched.
         campaign_obj = Campaign.objects.get(pk=1)
         dialersetting = UserProfile.objects.get(user=campaign_obj.user).dialersetting
 
@@ -333,17 +330,26 @@ class DialerContactCeleryTaskTestCase(TestCase):
         postgres_databases['default'] = dict(
             postgres_databases['default'], ENGINE='django.db.backends.postgresql_psycopg2')
 
-        try:
-            with override_settings(DATABASES=postgres_databases):
-                # Branch: max_subr_cpg > 0 -> limit_value is a bound int
-                importcontact_custom_sql(1, 1)
+        fake_cursor = FakeCursor()
+        original_cursor = connection.cursor
 
-                # Branch: max_subr_cpg <= 0 -> limit_value is bound None (LIMIT NULL)
-                dialersetting.max_subr_cpg = 0
-                dialersetting.save()
+        with override_settings(DATABASES=postgres_databases):
+            # Branch: max_subr_cpg > 0 -> limit_value is a bound int
+            connection.cursor = lambda: fake_cursor
+            try:
                 importcontact_custom_sql(1, 1)
-        finally:
-            connection.cursor = original_cursor
+            finally:
+                connection.cursor = original_cursor
+
+            # Branch: max_subr_cpg <= 0 -> limit_value is bound None (LIMIT NULL)
+            dialersetting.max_subr_cpg = 0
+            dialersetting.save()
+
+            connection.cursor = lambda: fake_cursor
+            try:
+                importcontact_custom_sql(1, 1)
+            finally:
+                connection.cursor = original_cursor
 
         self.assertEqual(len(fake_cursor.calls), 2)
         for sql, params in fake_cursor.calls:
