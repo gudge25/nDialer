@@ -95,6 +95,11 @@ class DialerContactView(BaseAuthenticatedClient):
         row, not imported as a Contact, via the admin import_contact view."""
         from django.core.files.uploadedfile import SimpleUploadedFile
 
+        # Use a phonebook owned by this test's own logged-in user, rather
+        # than assuming pk=1 is a valid choice for it (Contact_fileImport's
+        # phonebook field only offers choices owned by request.user).
+        phonebook = Phonebook.objects.create(name='admin import test', user=self.user)
+
         before_count = Contact.objects.count()
         csv_content = (
             b'0|Doe|John|john@example.com|test|1|Address|City|State|ES|123|\n'
@@ -103,7 +108,7 @@ class DialerContactView(BaseAuthenticatedClient):
         upload = SimpleUploadedFile('import.csv', csv_content)
         response = self.client.post(
             '/admin/dialer_contact/contact/import_contact/',
-            data={'phonebook': '1', 'csv_file': upload})
+            data={'phonebook': str(phonebook.pk), 'csv_file': upload})
         self.assertEqual(response.status_code, 200)
 
         self.assertFalse(Contact.objects.filter(contact='0').exists())
