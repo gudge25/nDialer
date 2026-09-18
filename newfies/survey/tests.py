@@ -445,6 +445,22 @@ class SurveyCustomerView(BaseAuthenticatedClient):
         response = section_branch_add(request)
         self.assertEqual(response.status_code, 200)
 
+    def test_get_branching_goto_field_escapes_question_text(self):
+        """get_branching_goto_field must HTML-escape section question/script
+        text, since it is free text entered by a survey author."""
+        from survey.templatetags.survey_tags import get_branching_goto_field
+
+        section = Section_template.objects.get(pk=1)
+        section.question = '<script>alert(1)</script> & "quotes"'
+        section.script = ''
+        section.save()
+
+        option_list = get_branching_goto_field(section.id, None)
+
+        self.assertIn('&lt;script&gt;alert(1)&lt;/script&gt;', option_list)
+        self.assertIn('&amp;', option_list)
+        self.assertNotIn('<script>alert(1)</script>', option_list)
+
         # request = self.factory.get('/section/branch/add/?section_id=1',
         #    {'keys': 1, 'section': 1,
         #     'goto': 1})
@@ -510,6 +526,27 @@ class SurveyCustomerView(BaseAuthenticatedClient):
         response = self.client.post('/module/import_survey/',
                                     data={'survey_file': '', 'name': 'new survey'})
         self.assertEqual(response.status_code, 200)
+
+    def test_import_survey_skips_zero_marker_row(self):
+        """A row whose first column is "0" must be skipped like an empty
+        row, not imported as a section."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        before_count = Section_template.objects.count()
+        # A valid 30-column section row (order=1) plus a zero-marker row
+        # (only column 0 matters for the skip check).
+        section_row = ['1', '1', 'Question text', 'Script text'] + [''] * 25 + ['1']
+        zero_row = ['0'] + [''] * 29
+        self.assertEqual(len(section_row), 30)
+        self.assertEqual(len(zero_row), 30)
+        csv_content = ('|'.join(zero_row) + '\n' + '|'.join(section_row) + '\n').encode('utf-8')
+        upload = SimpleUploadedFile('survey.csv', csv_content)
+
+        response = self.client.post('/module/import_survey/',
+                                    data={'survey_file': upload, 'name': 'imported survey'})
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(Section_template.objects.count(), before_count + 1)
 
     def test_seal_survey(self):
         request = self.factory.get('/module/seal_survey/1/')

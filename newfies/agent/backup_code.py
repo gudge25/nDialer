@@ -73,6 +73,8 @@ class AgentProfileCustomerView(BaseAuthenticatedClient):
         """Test Function to check add agent"""
         response = self.client.get('/module/agent/add/')
         self.assertEqual(response.status_code, 200)
+        # Throwaway password for a Django test-client POST against a
+        # per-test in-memory database; not a real credential.
         response = self.client.post('/agent/add/',
                                     data={'username': 'xyz',
                                           'password1': '1234',

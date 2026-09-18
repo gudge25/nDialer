@@ -27,6 +27,7 @@ from dialer_campaign.function_def import check_dialer_setting, dialer_setting_li
 from user_profile.constants import NOTIFICATION_NAME
 from frontend_notification.views import frontend_send_notification
 from django_lets_go.common_functions import striplist
+from common_functions import is_skip_marker_row
 import csv
 import json
 
@@ -40,6 +41,40 @@ class PhonebookAdmin(admin.ModelAdmin):
     list_filter = ['user', 'created_date']
     ordering = ('id', )
 admin.site.register(Phonebook, PhonebookAdmin)
+
+
+def _build_contact_from_import_row(row, phonebook):
+    """Build a Contact from an already-stripped, non-skip-marker row.
+
+    Returns (contact, error_msg): ``(Contact, None)`` on success, or
+    ``(None, <message>)`` if the row is invalid.
+    """
+    if not int(row[5]):
+        return None, _("invalid value for import! please check the import samples or phonebook is not valid")
+
+    if len(row[9]) > 2:
+        return None, _("invalid value for country code, it needs to be a valid ISO 3166-1 alpha-2 codes "
+                        "(http://en.wikipedia.org/wiki/ISO_3166-1)")
+
+    row_11 = ''
+    if row[11]:
+        row_11 = json.loads(row[11])
+
+    contact = Contact(
+        phonebook=phonebook,
+        contact=row[0],
+        last_name=row[1],
+        first_name=row[2],
+        email=row[3],
+        description=row[4],
+        status=int(row[5]),
+        address=row[6],
+        city=row[7],
+        state=row[8],
+        country=row[9],
+        unit_number=row[10],
+        additional_vars=row_11)
+    return contact, None
 
 
 class ContactAdmin(admin.ModelAdmin):
@@ -155,40 +190,16 @@ class ContactAdmin(admin.ModelAdmin):
             # Read each Row
             for row in rdr:
                 row = striplist(row)
-                if not row or str(row[0]) == 0:
+                if is_skip_marker_row(row):
                     continue
 
-                # check field type
-                if not int(row[5]):
-                    error_msg = _("invalid value for import! please check the import samples or phonebook is not valid")
+                contact, err = _build_contact_from_import_row(row, phonebook)
+                if contact is None:
+                    error_msg = err
                     type_error_import_list.append(row)
                     break
 
-                if len(row[9]) > 2:
-                    error_msg = _("invalid value for country code, it needs to be a valid ISO 3166-1 alpha-2 codes (http://en.wikipedia.org/wiki/ISO_3166-1)")
-                    type_error_import_list.append(row)
-                    break
-
-                row_11 = ''
-                if row[11]:
-                    row_11 = json.loads(row[11])
-
-                bulk_record.append(
-                    Contact(
-                        phonebook=phonebook,
-                        contact=row[0],
-                        last_name=row[1],
-                        first_name=row[2],
-                        email=row[3],
-                        description=row[4],
-                        status=int(row[5]),
-                        address=row[6],
-                        city=row[7],
-                        state=row[8],
-                        country=row[9],
-                        unit_number=row[10],
-                        additional_vars=row_11)
-                )
+                bulk_record.append(contact)
 
                 contact_cnt = contact_cnt + 1
                 if contact_cnt < 100:

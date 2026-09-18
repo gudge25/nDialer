@@ -180,6 +180,7 @@ TTS_ENGINE = 'FLITE'  # FLITE, CEPSTRAL, ACAPELA
 
 ACCOUNT_LOGIN = 'EVAL_XXXX'
 APPLICATION_LOGIN = 'EVAL_XXXXXXX'
+# All-X placeholder for the Acapela TTS eval account, not a real credential.
 APPLICATION_PASSWORD = 'XXXXXXXX'
 
 SERVICE_URL = 'http://vaas.acapela-group.com/Services/Synthesizer'

@@ -13,6 +13,7 @@
 #
 
 from django.template.defaultfilters import register
+from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
 from survey.views import survey_audio_recording
 from survey.models import Section_template, Branching_template
@@ -90,6 +91,9 @@ def get_branching_goto_field(section_id, selected_value):
             q_string = i.question
         else:
             q_string = i.script
+        # question/script is free text entered by a survey author; escape it
+        # before embedding in the <option> label so it can't inject markup.
+        q_string = escape(q_string)
 
         if selected_value == i.id:
             option_list += '<option value="%s" selected=selected>Goto: %s</option>' % \

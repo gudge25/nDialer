@@ -28,6 +28,7 @@
                     </div>
                     <div class="span4">{{ field }}
                         {% if field.errors %}
+                            {# field.errors is already HTML-escaped by Django's ErrorList.as_ul() before removetags/safe run here; |safe avoids double-escaping those entities, not bypassing escaping. #}
                             <span class="help-block">{{ field.errors|removetags:"ul li"|safe }}</span>
                         {% endif %}
                         <span class="help-block">{{ field.help_text|capfirst }} </span>
@@ -44,6 +45,7 @@
                     </div>
                     <div class="span4">{{ field }}
                         {% if field.errors %}
+                            {# field.errors is already HTML-escaped by Django's ErrorList.as_ul() before removetags/safe run here; |safe avoids double-escaping those entities, not bypassing escaping. #}
                             <span class="help-block">{{ field.errors|removetags:"ul li"|safe }}</span>
                         {% endif %}
                         <span class="help-block">{{ field.help_text|capfirst }} </span>

@@ -16,6 +16,8 @@ from agent.models import Agent, AgentProfile
 from django import forms
 from dialer_campaign.models import Subscriber
 
+# Display-masking placeholder shown in API responses in place of a real
+# password value; not a credential itself.
 HIDDEN_PASSWORD_STRING = '<hidden>'
 
 

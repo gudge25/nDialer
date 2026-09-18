@@ -47,6 +47,9 @@ def campaign_status(value):
 def get_campaign_status(id):
     """To get status name from CAMPAIGN_STATUS
 
+    Rendered with |safe in templates: id is always an integer status code
+    keyed against the fixed CAMPAIGN_STATUS_COLOR map, never free text.
+
     >>> get_campaign_status(1)
     '<font color="green">STARTED</font>'
 
@@ -75,7 +78,11 @@ def get_app_name(app_label, model_name, object_id):
 
 @register.filter(name='create_duplicate_campaign')
 def create_duplicate_campaign(camp_id):
-    """Create link to make duplicate campaign"""
+    """Create link to make duplicate campaign
+
+    Rendered with |safe in templates: camp_id is always an integer primary
+    key (row.id from the queryset), never free text.
+    """
     link = '<a href="#campaign-duplicate"  url="/campaign_duplicate/%s/" class="campaign-duplicate" data-toggle="modal" data-controls-modal="campaign-duplicate" title="%s"><i class="fa fa-copy"></i></a>' \
            % (camp_id, _('Duplicate this campaign'))
     return link
