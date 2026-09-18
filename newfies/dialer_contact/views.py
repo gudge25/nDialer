@@ -429,7 +429,7 @@ def _build_contact_from_import_row(row, phonebook):
     if row[11]:
         try:
             row_11 = json.loads(row[11])
-        except:
+        except ValueError:
             row_11 = ''
 
     contact = Contact(
