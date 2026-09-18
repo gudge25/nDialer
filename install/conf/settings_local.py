@@ -28,6 +28,13 @@ TIME_ZONE = 'Europe/Madrid'
 
 APPLICATION_DIR = os.path.dirname(globals()['__file__'])
 
+# SECRET KEY
+# ==========
+# Required for production. Generate a unique value per deployment, e.g.:
+#   python -c "import random; chars='abcdefghijklmnopqrstuvwxyz0123456789!@#%^&*(-_=+)'; print(''.join(random.SystemRandom().choice(chars) for _ in range(50)))"
+# Do not reuse the value from settings.py or from any other deployment.
+SECRET_KEY = 'REPLACE_WITH_A_UNIQUE_GENERATED_SECRET_KEY'
+
 
 # DATABASE SETTINGS
 # =================

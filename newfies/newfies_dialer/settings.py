@@ -30,6 +30,11 @@ SERVER_EMAIL = 'newfies@localhost.com'
 
 APPLICATION_DIR = os.path.dirname(globals()['__file__']) + '/../'
 
+# Default is sqlite3, a local file-based DB with no network listener and no
+# username/password concept; the empty USER/PASSWORD/HOST/PORT below are
+# correct for it, not an oversight. A deployment that overrides ENGINE to a
+# networked backend (e.g. via settings_local.py) MUST also set real USER and
+# PASSWORD values for that connection.
 DATABASES = {
     'default': {
         # 'postgresql_psycopg2','postgresql','sqlite3','oracle', 'django.db.backends.mysql'
@@ -119,7 +124,10 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'ujau$^uei_ak=@-v8va(&@q_sc0^1nn*qpwyc-776n&qoam@+v'
+# Real deployments MUST override this via the DJANGO_SECRET_KEY environment
+# variable or a SECRET_KEY entry in settings_local.py. This fallback is for
+# local/dev bootstrap only and is NOT suitable for production use.
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '=pPv0TaEDSbjVg1NavJHWKQA%XY4)U4=ewQ_qEykMmD7SDG-kn')
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (

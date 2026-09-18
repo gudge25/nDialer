@@ -95,10 +95,8 @@ def phonebook_add(request):
 @login_required
 def get_contact_count(request):
     """To get total no of contacts belonging to a phonebook list"""
-    values = request.GET.getlist('ids')
-    values = ", ".join(["%s" % el for el in values])
-    contact_count = Contact.objects.filter(phonebook__user=request.user)\
-        .extra(where=['phonebook_id IN (%s)' % values]).count()
+    ids = [int(el) for el in request.GET.getlist('ids') if el.isdigit()]
+    contact_count = Contact.objects.filter(phonebook__user=request.user, phonebook_id__in=ids).count()
 
     return HttpResponse(contact_count)
 
@@ -131,18 +129,16 @@ def phonebook_del(request, object_id):
         request.session["msg"] = _('"%(name)s" is deleted.') % {'name': phonebook.name}
     else:
         # When object_id is 0 (Multiple records delete)
-        values = request.POST.getlist('select')
-        values = ", ".join(["%s" % el for el in values])
+        ids = [int(el) for el in request.POST.getlist('select') if el.isdigit()]
         try:
             # Delete all contacts belonging to a phonebook
             contact_list = Contact.objects\
-                .filter(phonebook__user=request.user)\
-                .extra(where=['phonebook_id IN (%s)' % values])
+                .filter(phonebook__user=request.user, phonebook_id__in=ids)
             if contact_list:
                 contact_list.delete()
 
             # Delete phonebook
-            phonebook_list = Phonebook.objects.filter(user=request.user).extra(where=['id IN (%s)' % values])
+            phonebook_list = Phonebook.objects.filter(user=request.user, id__in=ids)
             if phonebook_list:
                 phonebook_list.delete()
                 request.session["msg"] = _('%(count)s phonebook(s) are deleted.') % {'count': phonebook_list.count()}
@@ -352,11 +348,10 @@ def contact_del(request, object_id):
         contact.delete()
     else:
         # When object_id is 0 (Multiple records delete)
-        values = request.POST.getlist('select')
-        values = ", ".join(["%s" % el for el in values])
+        ids = [int(el) for el in request.POST.getlist('select') if el.isdigit()]
 
         try:
-            contact_list = Contact.objects.extra(where=['id IN (%s)' % values])
+            contact_list = Contact.objects.filter(id__in=ids)
             if contact_list:
                 request.session["msg"] = _('%s contact(s) are deleted.') % contact_list.count()
                 contact_list.delete()

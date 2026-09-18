@@ -144,11 +144,10 @@ def survey_del(request, object_id):
         survey.delete()
     else:
         # When object_id is 0 (Multiple records delete)
-        values = request.POST.getlist('select')
-        values = ", ".join(["%s" % el for el in values])
+        ids = [int(el) for el in request.POST.getlist('select') if el.isdigit()]
         try:
             # 1) delete survey
-            survey_list = Survey_template.objects.filter(user=request.user).extra(where=['id IN (%s)' % values])
+            survey_list = Survey_template.objects.filter(user=request.user, id__in=ids)
             if survey_list:
                 for survey in survey_list:
                     delete_section_branching(survey)

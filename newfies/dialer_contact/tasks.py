@@ -98,21 +98,25 @@ def importcontact_custom_sql(campaign_id, phonebook_id):
     cursor = connection.cursor()
     if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql_psycopg2':
         # Data insert operation - http://stackoverflow.com/questions/12451053/django-bulk-create-with-ignore-rows-that-cause-integrityerror
+        # limit_import is a fixed 'LIMIT <int>'/'LIMIT 0'/'' fragment built
+        # above from internal counts, not request input, so it is safe to
+        # keep as literal SQL text; campaign_id/phonebook_id are bound as
+        # query parameters below.
         sqlimport = \
             "LOCK TABLE dialer_subscriber IN EXCLUSIVE MODE;" \
             "INSERT INTO dialer_subscriber "\
             "(contact_id, campaign_id, duplicate_contact, status, created_date, updated_date) "\
-            "SELECT id, %d, contact, 1, NOW(), NOW() FROM dialer_contact "\
-            "WHERE phonebook_id=%d AND dialer_contact.status=1 AND NOT EXISTS (" \
+            "SELECT id, %s, contact, 1, NOW(), NOW() FROM dialer_contact "\
+            "WHERE phonebook_id=%s AND dialer_contact.status=1 AND NOT EXISTS (" \
             "SELECT 1 FROM dialer_subscriber WHERE "\
-            "dialer_subscriber.campaign_id=%d "\
-            "AND dialer_contact.id = dialer_subscriber.contact_id ) %s;" % \
-            (campaign_id, phonebook_id, campaign_id, limit_import)
+            "dialer_subscriber.campaign_id=%s "\
+            "AND dialer_contact.id = dialer_subscriber.contact_id ) " + limit_import + ";"
+        sqlparams = [campaign_id, phonebook_id, campaign_id]
     else:
         # MYSQL Support removed
         logger.error("Database not supported (%s)" % settings.DATABASES['default']['ENGINE'])
         return False
 
-    cursor.execute(sqlimport)
+    cursor.execute(sqlimport, sqlparams)
 
     return True
