@@ -332,9 +332,9 @@ def importcontact_custom_sql(sms_campaign_id, phonebook_id):
         # Data insert operation - commit required
         sqlimport = "INSERT IGNORE INTO sms_campaign_subscriber (contact_id, "\
             "sms_campaign_id, duplicate_contact, status, created_date, updated_date) "\
-            "SELECT id, %d, contact, 1, NOW(), NOW() FROM dialer_contact "\
-            "WHERE phonebook_id=%d AND dialer_contact.status=1" % \
-            (sms_campaign_id, phonebook_id)
+            "SELECT id, %s, contact, 1, NOW(), NOW() FROM dialer_contact "\
+            "WHERE phonebook_id=%s AND dialer_contact.status=1"
+        sqlparams = [sms_campaign_id, phonebook_id]
 
     elif settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql_psycopg2':
         # Data insert operation -
@@ -342,19 +342,19 @@ def importcontact_custom_sql(sms_campaign_id, phonebook_id):
         sqlimport = "LOCK TABLE sms_campaign_subscriber IN EXCLUSIVE MODE;" \
             "INSERT INTO sms_campaign_subscriber (contact_id, "\
             "sms_campaign_id, duplicate_contact, status, created_date, updated_date) "\
-            "SELECT id, %d, contact, 1, NOW(), NOW() FROM dialer_contact "\
-            "WHERE phonebook_id=%d AND dialer_contact.status=1 AND NOT EXISTS (" \
+            "SELECT id, %s, contact, 1, NOW(), NOW() FROM dialer_contact "\
+            "WHERE phonebook_id=%s AND dialer_contact.status=1 AND NOT EXISTS (" \
             "SELECT 1 FROM sms_campaign_subscriber WHERE "\
-            "sms_campaign_subscriber.sms_campaign_id=%d "\
-            "AND dialer_contact.id = sms_campaign_subscriber.contact_id );" % \
-            (sms_campaign_id, phonebook_id, sms_campaign_id)
+            "sms_campaign_subscriber.sms_campaign_id=%s "\
+            "AND dialer_contact.id = sms_campaign_subscriber.contact_id );"
+        sqlparams = [sms_campaign_id, phonebook_id, sms_campaign_id]
     else:
         # Other DB
         logger.error("[SMS_TASK] Database not supported (%s)" %
                      settings.DATABASES['default']['ENGINE'])
         return False
 
-    cursor.execute(sqlimport)
+    cursor.execute(sqlimport, sqlparams)
 
     return True
 

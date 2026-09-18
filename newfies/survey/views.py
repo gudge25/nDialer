@@ -52,6 +52,20 @@ testdebug = False
 redirect_url_to_survey_list = '/module/survey/'
 
 
+def _to_valid_ids(values):
+    """Convert request values to ints, silently dropping ones that aren't
+    valid integers (e.g. str.isdigit() is True for non-ASCII digit-like
+    characters, such as a Unicode superscript-two digit, that int() still
+    rejects)."""
+    ids = []
+    for value in values:
+        try:
+            ids.append(int(value))
+        except (TypeError, ValueError):
+            pass
+    return ids
+
+
 @permission_required('survey.view_survey', login_url='/')
 @login_required
 def survey_list(request):
@@ -144,11 +158,10 @@ def survey_del(request, object_id):
         survey.delete()
     else:
         # When object_id is 0 (Multiple records delete)
-        values = request.POST.getlist('select')
-        values = ", ".join(["%s" % el for el in values])
+        ids = _to_valid_ids(request.POST.getlist('select'))
         try:
             # 1) delete survey
-            survey_list = Survey_template.objects.filter(user=request.user).extra(where=['id IN (%s)' % values])
+            survey_list = Survey_template.objects.filter(user=request.user, id__in=ids)
             if survey_list:
                 for survey in survey_list:
                     delete_section_branching(survey)

@@ -300,10 +300,9 @@ class SMSCampaign(Model):
             AND dc.id NOT IN \
             (SELECT  sms_campaign_subscriber.contact_id \
             FROM sms_campaign_subscriber \
-            WHERE sms_campaign_subscriber.sms_campaign_id = %s)' % \
-            (str(self.id), str(self.id),)
+            WHERE sms_campaign_subscriber.sms_campaign_id = %s)'
 
-        raw_contact_list = Contact.objects.raw(query)
+        raw_contact_list = Contact.objects.raw(query, [self.id, self.id])
         return raw_contact_list
 
     def progress_bar(self):

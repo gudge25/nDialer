@@ -47,6 +47,20 @@ import time
 redirect_url_to_smscampaign_list = '/sms_campaign/'
 
 
+def _to_valid_ids(values):
+    """Convert request values to ints, silently dropping ones that aren't
+    valid integers (e.g. str.isdigit() is True for non-ASCII digit-like
+    characters, such as a Unicode superscript-two digit, that int() still
+    rejects)."""
+    ids = []
+    for value in values:
+        try:
+            ids.append(int(value))
+        except (TypeError, ValueError):
+            pass
+    return ids
+
+
 @login_required
 def update_sms_campaign_status_admin(request, pk, status):
     """SMS Campaign Status (e.g. start|stop|pause|abort) can be changed from
@@ -223,9 +237,8 @@ def sms_campaign_del(request, object_id):
                 sms_campaign.delete()
     except:
         # When object_id is 0 (Multiple records delete)
-        values = request.POST.getlist('select')
-        values = ", ".join(["%s" % el for el in values])
-        sms_campaign_list = SMSCampaign.objects.extra(where=['id IN (%s)' % values])
+        ids = _to_valid_ids(request.POST.getlist('select'))
+        sms_campaign_list = SMSCampaign.objects.filter(id__in=ids)
         if sms_campaign_list:
             if stop_sms_campaign:
                 sms_campaign_list.update(status=SMS_CAMPAIGN_STATUS.END)
@@ -415,6 +428,9 @@ def sms_dashboard(request, on_index=None):
         else:
             date_length = 10  # Last 30 days option
 
+        # date_length is always one of {10, 13, 16}, set above from
+        # SEARCH_TYPE branches, never from request input, so this
+        # .extra(select=...) is not a SQL-injection vector.
         select_data = {
             "send_date": "SUBSTR(CAST(send_date as CHAR(30)),1," + str(date_length) + ")"}
 

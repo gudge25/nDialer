@@ -86,13 +86,11 @@ def importcontact_custom_sql(campaign_id, phonebook_id):
         # Check how many we are going to import and how many exist for that campaign already
         imported_subscriber_count = Subscriber.objects.filter(campaign_id=campaign_id).count()
         allowed_import = max_subr_cpg - imported_subscriber_count
-        if allowed_import > 0:
-            # handle negative value for to_import
-            limit_import = 'LIMIT %d' % allowed_import
-        else:
-            limit_import = 'LIMIT 0'
+        # handle negative value for to_import
+        limit_value = allowed_import if allowed_import > 0 else 0
     else:
-        limit_import = ''
+        # LIMIT NULL is equivalent to omitting LIMIT entirely in PostgreSQL
+        limit_value = None
 
     from django.db import connection
     cursor = connection.cursor()
@@ -102,17 +100,17 @@ def importcontact_custom_sql(campaign_id, phonebook_id):
             "LOCK TABLE dialer_subscriber IN EXCLUSIVE MODE;" \
             "INSERT INTO dialer_subscriber "\
             "(contact_id, campaign_id, duplicate_contact, status, created_date, updated_date) "\
-            "SELECT id, %d, contact, 1, NOW(), NOW() FROM dialer_contact "\
-            "WHERE phonebook_id=%d AND dialer_contact.status=1 AND NOT EXISTS (" \
+            "SELECT id, %s, contact, 1, NOW(), NOW() FROM dialer_contact "\
+            "WHERE phonebook_id=%s AND dialer_contact.status=1 AND NOT EXISTS (" \
             "SELECT 1 FROM dialer_subscriber WHERE "\
-            "dialer_subscriber.campaign_id=%d "\
-            "AND dialer_contact.id = dialer_subscriber.contact_id ) %s;" % \
-            (campaign_id, phonebook_id, campaign_id, limit_import)
+            "dialer_subscriber.campaign_id=%s "\
+            "AND dialer_contact.id = dialer_subscriber.contact_id ) LIMIT %s;"
+        sqlparams = [campaign_id, phonebook_id, campaign_id, limit_value]
     else:
         # MYSQL Support removed
         logger.error("Database not supported (%s)" % settings.DATABASES['default']['ENGINE'])
         return False
 
-    cursor.execute(sqlimport)
+    cursor.execute(sqlimport, sqlparams)
 
     return True
