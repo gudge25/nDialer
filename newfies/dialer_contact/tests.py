@@ -302,6 +302,7 @@ class DialerContactCeleryTaskTestCase(TestCase):
 
         # Test mgt command
         call_command("create_contact", "1|10")
+        call_command("create_contact", "3|10")
 
     def test_importcontact_custom_sql_parameterized(self):
         """importcontact_custom_sql must bind campaign/phonebook ids and the
@@ -369,8 +370,6 @@ class DialerContactCeleryTaskTestCase(TestCase):
             self.assertEqual(params[:3], [1, 1, 1])
         self.assertGreater(calls[0][1][3], 0)
         self.assertIsNone(calls[1][1][3])
-
-        call_command("create_contact", "3|10")
 
 
 class DialerContactModel(TestCase):

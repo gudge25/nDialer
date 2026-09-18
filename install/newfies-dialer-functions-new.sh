@@ -548,6 +548,10 @@ func_prepare_settings(){
     echo "Update Secret Key..."
     RANDPASSW=`</dev/urandom tr -dc A-Za-z0-9| (head -c $1 > /dev/null 2>&1 || head -c 50)`
     sed -i "s/^SECRET_KEY.*/SECRET_KEY = \'$RANDPASSW\'/g"  $CONFIG_DIR/settings.py
+    # settings_local.py is imported last (see settings.py's trailing
+    # `from settings_local import *`) and its own SECRET_KEY placeholder
+    # would otherwise silently override the random value just set above.
+    sed -i "s/^SECRET_KEY.*/SECRET_KEY = \'$RANDPASSW\'/g"  $CONFIG_DIR/settings_local.py
     echo ""
 
     #Disable Debug

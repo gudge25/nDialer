@@ -34,6 +34,19 @@ redirect_url_to_phonebook_list = '/phonebook/'
 redirect_url_to_contact_list = '/contact/'
 
 
+def _to_valid_ids(values):
+    """Convert request values to ints, silently dropping ones that aren't
+    valid integers (e.g. str.isdigit() is True for non-ASCII digit-like
+    characters, such as u'²', that int() still rejects)."""
+    ids = []
+    for value in values:
+        try:
+            ids.append(int(value))
+        except (TypeError, ValueError):
+            pass
+    return ids
+
+
 @permission_required('dialer_contact.view_phonebook', login_url='/')
 @login_required
 def phonebook_list(request):
@@ -95,7 +108,7 @@ def phonebook_add(request):
 @login_required
 def get_contact_count(request):
     """To get total no of contacts belonging to a phonebook list"""
-    ids = [int(el) for el in request.GET.getlist('ids') if el.isdigit()]
+    ids = _to_valid_ids(request.GET.getlist('ids'))
     contact_count = Contact.objects.filter(phonebook__user=request.user, phonebook_id__in=ids).count()
 
     return HttpResponse(contact_count)
@@ -129,7 +142,7 @@ def phonebook_del(request, object_id):
         request.session["msg"] = _('"%(name)s" is deleted.') % {'name': phonebook.name}
     else:
         # When object_id is 0 (Multiple records delete)
-        ids = [int(el) for el in request.POST.getlist('select') if el.isdigit()]
+        ids = _to_valid_ids(request.POST.getlist('select'))
         try:
             # Delete all contacts belonging to a phonebook
             contact_list = Contact.objects\
@@ -348,7 +361,7 @@ def contact_del(request, object_id):
         contact.delete()
     else:
         # When object_id is 0 (Multiple records delete)
-        ids = [int(el) for el in request.POST.getlist('select') if el.isdigit()]
+        ids = _to_valid_ids(request.POST.getlist('select'))
 
         try:
             contact_list = Contact.objects.filter(id__in=ids)

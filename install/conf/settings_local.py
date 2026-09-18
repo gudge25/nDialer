@@ -30,7 +30,12 @@ APPLICATION_DIR = os.path.dirname(globals()['__file__'])
 
 # SECRET KEY
 # ==========
-# Required for production. Generate a unique value per deployment, e.g.:
+# Required for production. install/newfies-dialer-functions*.sh's
+# func_prepare_settings() overwrites this placeholder with a random value
+# at install time (it must patch settings.py AND settings_local.py, since
+# this file is imported last and would otherwise silently override
+# settings.py's own random key). For a manual/non-scripted deployment,
+# replace this placeholder yourself before going live, e.g.:
 #   python -c "import random; chars='abcdefghijklmnopqrstuvwxyz0123456789!@#%^&*(-_=+)'; print(''.join(random.SystemRandom().choice(chars) for _ in range(50)))"
 # Do not reuse the value from settings.py or from any other deployment.
 SECRET_KEY = 'REPLACE_WITH_A_UNIQUE_GENERATED_SECRET_KEY'
