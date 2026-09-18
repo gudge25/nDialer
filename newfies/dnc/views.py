@@ -350,6 +350,24 @@ def dnc_contact_change(request, object_id):
     return render_to_response('dnc/dnc_contact/change.html', data, context_instance=RequestContext(request))
 
 
+def _build_dnc_contact_from_row(row, dnc):
+    """Validate one already-stripped import row and build a DNCContact for it.
+
+    Returns (dnc_contact, is_error): ``(None, False)`` if the row should be
+    silently skipped, ``(None, True)`` if the row is invalid, or
+    ``(DNCContact, False)`` on success.
+    """
+    if not row or str(row[0]) == '0':
+        return None, False
+
+    try:
+        int(row[0])
+    except ValueError:
+        return None, True
+
+    return DNCContact(dnc_id=dnc.id, phone_number=row[0]), False
+
+
 @login_required
 def dnc_contact_import(request):
     """Import CSV file of DNC Contacts for the logged in user
@@ -395,22 +413,14 @@ def dnc_contact_import(request):
         # Read each Row
         for row in csv_data:
             row = striplist(row)
-            if not row or str(row[0]) == '0':
+            dnc_contact, is_error = _build_dnc_contact_from_row(row, dnc)
+            if dnc_contact is None:
+                if is_error:
+                    error_msg = _("Some of the imported data was invalid!")
+                    type_error_import_list.append(row)
                 continue
 
-            # Check field type
-            try:
-                int(row[0])
-            except ValueError:
-                error_msg = _("Some of the imported data was invalid!")
-                type_error_import_list.append(row)
-                continue
-
-            bulk_record.append(
-                DNCContact(
-                    dnc_id=dnc.id,
-                    phone_number=row[0])
-            )
+            bulk_record.append(dnc_contact)
             contact_cnt = contact_cnt + 1
             if contact_cnt < 100:
                 # We want to display only 100 lines of the success import

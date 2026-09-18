@@ -42,6 +42,44 @@ class PhonebookAdmin(admin.ModelAdmin):
 admin.site.register(Phonebook, PhonebookAdmin)
 
 
+def _build_contact_from_import_row(row, phonebook):
+    """Validate one already-stripped import row and build a Contact for it.
+
+    Returns (contact, error_msg): ``(None, None)`` if the row should be
+    silently skipped, ``(None, <message>)`` if the row is invalid, or
+    ``(Contact, None)`` on success.
+    """
+    if not row or str(row[0]) == '0':
+        return None, None
+
+    if not int(row[5]):
+        return None, _("invalid value for import! please check the import samples or phonebook is not valid")
+
+    if len(row[9]) > 2:
+        return None, _("invalid value for country code, it needs to be a valid ISO 3166-1 alpha-2 codes "
+                        "(http://en.wikipedia.org/wiki/ISO_3166-1)")
+
+    row_11 = ''
+    if row[11]:
+        row_11 = json.loads(row[11])
+
+    contact = Contact(
+        phonebook=phonebook,
+        contact=row[0],
+        last_name=row[1],
+        first_name=row[2],
+        email=row[3],
+        description=row[4],
+        status=int(row[5]),
+        address=row[6],
+        city=row[7],
+        state=row[8],
+        country=row[9],
+        unit_number=row[10],
+        additional_vars=row_11)
+    return contact, None
+
+
 class ContactAdmin(admin.ModelAdmin):
 
     """Allows the administrator to view and modify certain attributes
@@ -155,40 +193,15 @@ class ContactAdmin(admin.ModelAdmin):
             # Read each Row
             for row in rdr:
                 row = striplist(row)
-                if not row or str(row[0]) == '0':
-                    continue
-
-                # check field type
-                if not int(row[5]):
-                    error_msg = _("invalid value for import! please check the import samples or phonebook is not valid")
+                contact, err = _build_contact_from_import_row(row, phonebook)
+                if contact is None:
+                    if err is None:
+                        continue
+                    error_msg = err
                     type_error_import_list.append(row)
                     break
 
-                if len(row[9]) > 2:
-                    error_msg = _("invalid value for country code, it needs to be a valid ISO 3166-1 alpha-2 codes (http://en.wikipedia.org/wiki/ISO_3166-1)")
-                    type_error_import_list.append(row)
-                    break
-
-                row_11 = ''
-                if row[11]:
-                    row_11 = json.loads(row[11])
-
-                bulk_record.append(
-                    Contact(
-                        phonebook=phonebook,
-                        contact=row[0],
-                        last_name=row[1],
-                        first_name=row[2],
-                        email=row[3],
-                        description=row[4],
-                        status=int(row[5]),
-                        address=row[6],
-                        city=row[7],
-                        state=row[8],
-                        country=row[9],
-                        unit_number=row[10],
-                        additional_vars=row_11)
-                )
+                bulk_record.append(contact)
 
                 contact_cnt = contact_cnt + 1
                 if contact_cnt < 100:

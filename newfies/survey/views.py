@@ -1129,6 +1129,78 @@ def export_survey(request, id):
     return response
 
 
+def _import_section_row(row, new_survey, new_old_section):
+    """Create a Section_template from a 30-column import row and record its
+    old->new section id mapping in new_old_section.
+
+    Returns True on success, False if row processing raised an error.
+    """
+    try:
+        section_template_obj = Section_template.objects.create(
+            order=int(row[0]),
+            type=int(row[1]) if row[1] else 1,
+            question=row[2],
+            script=row[3],
+            audiofile_id=int(row[4]) if row[4] else None,
+            retries=int(row[5]) if row[5] else 0,
+            timeout=int(row[6]) if row[6] else 0,
+            key_0=row[7] if row[7] else '',
+            key_1=row[8] if row[8] else '',
+            key_2=row[9] if row[9] else '',
+            key_3=row[10] if row[10] else '',
+            key_4=row[11] if row[11] else '',
+            key_5=row[12] if row[12] else '',
+            key_6=row[13] if row[13] else '',
+            key_7=row[14] if row[14] else '',
+            key_8=row[15] if row[15] else '',
+            key_9=row[16] if row[16] else '',
+            rating_laps=int(row[17]) if row[17] else None,
+            validate_number=row[18] if row[18] == 'True' else False,
+            number_digits=int(row[19]) if row[19] else None,
+            min_number=row[20] if row[20] else None,
+            max_number=row[21] if row[21] else None,
+            phonenumber=row[22] if row[22] else None,
+            confirm_script=row[23] if row[23] else None,
+            confirm_key=row[24] if row[24] else None,
+            conference=row[25] if row[25] else None,
+            sms_text=row[26] if row[26] else None,
+            completed=True if row[27] == 'True' else False,
+            invalid_audiofile_id=int(row[28]) if row[28] else None,
+            survey=new_survey,
+        )
+        new_old_section[int(row[29])] = section_template_obj.id
+        return True
+    except:
+        return False
+
+
+def _import_branching_row(row, new_old_section):
+    """Create a Branching_template from a 3-column import row.
+
+    Returns True on success (including when a duplicate is silently
+    skipped), False if row processing raised an error.
+    """
+    new_section_id = ''
+    new_goto_section_id = ''
+    if row[1]:
+        new_section_id = new_old_section[int(row[1])]
+    if row[2]:
+        new_goto_section_id = new_old_section[int(row[2])]
+
+    duplicate_count = Branching_template.objects.filter(
+        keys=row[0], section_id=new_section_id).count()
+    if duplicate_count == 0:
+        try:
+            Branching_template.objects.create(
+                keys=row[0],
+                section_id=new_section_id,
+                goto_id=int(new_goto_section_id) if new_goto_section_id else None,
+            )
+        except:
+            return False
+    return True
+
+
 @permission_required('survey.import_survey', login_url='/')
 @login_required
 def import_survey(request):
@@ -1159,65 +1231,15 @@ def import_survey(request):
 
                 # if length of row is 30, it's a section
                 if len(row) == 30:
-                    try:
-                        # for section
-                        section_template_obj = Section_template.objects.create(
-                            order=int(row[0]),
-                            type=int(row[1]) if row[1] else 1,
-                            question=row[2],
-                            script=row[3],
-                            audiofile_id=int(row[4]) if row[4] else None,
-                            retries=int(row[5]) if row[5] else 0,
-                            timeout=int(row[6]) if row[6] else 0,
-                            key_0=row[7] if row[7] else '',
-                            key_1=row[8] if row[8] else '',
-                            key_2=row[9] if row[9] else '',
-                            key_3=row[10] if row[10] else '',
-                            key_4=row[11] if row[11] else '',
-                            key_5=row[12] if row[12] else '',
-                            key_6=row[13] if row[13] else '',
-                            key_7=row[14] if row[14] else '',
-                            key_8=row[15] if row[15] else '',
-                            key_9=row[16] if row[16] else '',
-                            rating_laps=int(row[17]) if row[17] else None,
-                            validate_number=row[18] if row[18] == 'True' else False,
-                            number_digits=int(row[19]) if row[19] else None,
-                            min_number=row[20] if row[20] else None,
-                            max_number=row[21] if row[21] else None,
-                            phonenumber=row[22] if row[22] else None,
-                            confirm_script=row[23] if row[23] else None,
-                            confirm_key=row[24] if row[24] else None,
-                            conference=row[25] if row[25] else None,
-                            sms_text=row[26] if row[26] else None,
-                            completed=True if row[27] == 'True' else False,
-                            invalid_audiofile_id=int(row[28]) if row[28] else None,
-                            survey=new_survey,
-                        )
-                        new_old_section[int(row[29])] = section_template_obj.id
+                    if _import_section_row(row, new_survey, new_old_section):
                         section_row.append(row)
-                    except:
+                    else:
                         type_error_import_list.append(row)
 
                 # if length of row is 3, it's a branching
                 if len(row) == 3:
-                    new_section_id = ''
-                    new_goto_section_id = ''
-                    if row[1]:
-                        new_section_id = new_old_section[int(row[1])]
-                    if row[2]:
-                        new_goto_section_id = new_old_section[int(row[2])]
-
-                    duplicate_count = Branching_template.objects.filter(
-                        keys=row[0], section_id=new_section_id).count()
-                    if duplicate_count == 0:
-                        try:
-                            Branching_template.objects.create(
-                                keys=row[0],
-                                section_id=new_section_id,
-                                goto_id=int(new_goto_section_id) if new_goto_section_id else None,
-                            )
-                        except:
-                            type_error_import_list.append(row)
+                    if not _import_branching_row(row, new_old_section):
+                        type_error_import_list.append(row)
 
             # connect post_save_add_script signal with Section_template
             post_save.connect(post_save_add_script, sender=Section_template)
