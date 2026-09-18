@@ -39,6 +39,7 @@ from survey.function_def import getaudio_acapela
 from survey.function_def import getaudio_mstranslator
 from django_lets_go.common_functions import striplist, ceil_strdate, getvar, unset_session_var,\
     get_pagination_vars
+from common_functions import is_skip_marker_row
 from mod_utils.helper import Export_choice
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -1226,7 +1227,7 @@ def import_survey(request):
             # Read each row
             for row in records:
                 row = striplist(row)
-                if not row or str(row[0]) == '0':
+                if is_skip_marker_row(row):
                     continue
 
                 # if length of row is 30, it's a section

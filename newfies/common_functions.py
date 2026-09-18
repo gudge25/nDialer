@@ -38,6 +38,12 @@ def check_celeryd_process():
         return False
 
 
+def is_skip_marker_row(row):
+    """CSV-import row that should be treated as blank: either genuinely
+    empty, or whose first column is the string "0" placeholder marker."""
+    return not row or str(row[0]) == '0'
+
+
 def search_tag_string(mstring, tag):
     """
     Search in string tag with their value

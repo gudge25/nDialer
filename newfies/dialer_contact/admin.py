@@ -27,6 +27,7 @@ from dialer_campaign.function_def import check_dialer_setting, dialer_setting_li
 from user_profile.constants import NOTIFICATION_NAME
 from frontend_notification.views import frontend_send_notification
 from django_lets_go.common_functions import striplist
+from common_functions import is_skip_marker_row
 import csv
 import json
 
@@ -43,15 +44,11 @@ admin.site.register(Phonebook, PhonebookAdmin)
 
 
 def _build_contact_from_import_row(row, phonebook):
-    """Validate one already-stripped import row and build a Contact for it.
+    """Build a Contact from an already-stripped, non-skip-marker row.
 
-    Returns (contact, error_msg): ``(None, None)`` if the row should be
-    silently skipped, ``(None, <message>)`` if the row is invalid, or
-    ``(Contact, None)`` on success.
+    Returns (contact, error_msg): ``(Contact, None)`` on success, or
+    ``(None, <message>)`` if the row is invalid.
     """
-    if not row or str(row[0]) == '0':
-        return None, None
-
     if not int(row[5]):
         return None, _("invalid value for import! please check the import samples or phonebook is not valid")
 
@@ -193,10 +190,11 @@ class ContactAdmin(admin.ModelAdmin):
             # Read each Row
             for row in rdr:
                 row = striplist(row)
+                if is_skip_marker_row(row):
+                    continue
+
                 contact, err = _build_contact_from_import_row(row, phonebook)
                 if contact is None:
-                    if err is None:
-                        continue
                     error_msg = err
                     type_error_import_list.append(row)
                     break

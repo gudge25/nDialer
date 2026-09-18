@@ -22,6 +22,7 @@ from dnc.forms import DNCListForm, DNCContactSearchForm, DNCContactForm,\
 from dnc.constants import DNC_COLUMN_NAME, DNC_CONTACT_COLUMN_NAME
 from django_lets_go.common_functions import get_pagination_vars, striplist, source_desti_field_chk,\
     getvar
+from common_functions import is_skip_marker_row
 from mod_utils.helper import Export_choice
 import tablib
 import csv
@@ -351,21 +352,17 @@ def dnc_contact_change(request, object_id):
 
 
 def _build_dnc_contact_from_row(row, dnc):
-    """Validate one already-stripped import row and build a DNCContact for it.
+    """Build a DNCContact from an already-stripped, non-skip-marker row.
 
-    Returns (dnc_contact, is_error): ``(None, False)`` if the row should be
-    silently skipped, ``(None, True)`` if the row is invalid, or
-    ``(DNCContact, False)`` on success.
+    Returns (dnc_contact, error_msg): ``(DNCContact, None)`` on success, or
+    ``(None, <message>)`` if the row is invalid.
     """
-    if not row or str(row[0]) == '0':
-        return None, False
-
     try:
         int(row[0])
     except ValueError:
-        return None, True
+        return None, _("Some of the imported data was invalid!")
 
-    return DNCContact(dnc_id=dnc.id, phone_number=row[0]), False
+    return DNCContact(dnc_id=dnc.id, phone_number=row[0]), None
 
 
 @login_required
@@ -413,11 +410,13 @@ def dnc_contact_import(request):
         # Read each Row
         for row in csv_data:
             row = striplist(row)
-            dnc_contact, is_error = _build_dnc_contact_from_row(row, dnc)
+            if is_skip_marker_row(row):
+                continue
+
+            dnc_contact, err = _build_dnc_contact_from_row(row, dnc)
             if dnc_contact is None:
-                if is_error:
-                    error_msg = _("Some of the imported data was invalid!")
-                    type_error_import_list.append(row)
+                error_msg = err
+                type_error_import_list.append(row)
                 continue
 
             bulk_record.append(dnc_contact)
