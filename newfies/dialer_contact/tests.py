@@ -315,12 +315,27 @@ class DialerContactCeleryTaskTestCase(TestCase):
         from dialer_contact.tasks import importcontact_custom_sql
         from user_profile.models import UserProfile
 
-        class FakeCursor(object):
+        calls = []
+        original_cursor = connection.cursor
+
+        # importcontact_custom_sql does its own ORM lookups (Campaign,
+        # UserProfile, Subscriber count) before building/running the raw
+        # INSERT, and those need a real, working cursor. So this wraps a
+        # real cursor and only intercepts execute() calls that target the
+        # raw dialer_subscriber INSERT - every other call (the ORM's own
+        # SELECTs) passes straight through untouched.
+        class SpyCursor(object):
             def __init__(self):
-                self.calls = []
+                self._real = original_cursor()
 
             def execute(self, sql, params=None):
-                self.calls.append((sql, params))
+                if 'dialer_subscriber' in sql:
+                    calls.append((sql, params))
+                    return
+                return self._real.execute(sql, params) if params is not None else self._real.execute(sql)
+
+            def __getattr__(self, name):
+                return getattr(self._real, name)
 
         # Real DB access (setup) happens before the cursor is ever patched.
         campaign_obj = Campaign.objects.get(pk=1)
@@ -330,35 +345,27 @@ class DialerContactCeleryTaskTestCase(TestCase):
         postgres_databases['default'] = dict(
             postgres_databases['default'], ENGINE='django.db.backends.postgresql_psycopg2')
 
-        fake_cursor = FakeCursor()
-        original_cursor = connection.cursor
-
         with override_settings(DATABASES=postgres_databases):
-            # Branch: max_subr_cpg > 0 -> limit_value is a bound int
-            connection.cursor = lambda: fake_cursor
+            connection.cursor = SpyCursor
             try:
+                # Branch: max_subr_cpg > 0 -> limit_value is a bound int
+                importcontact_custom_sql(1, 1)
+
+                # Branch: max_subr_cpg <= 0 -> limit_value is bound None (LIMIT NULL)
+                dialersetting.max_subr_cpg = 0
+                dialersetting.save()
                 importcontact_custom_sql(1, 1)
             finally:
                 connection.cursor = original_cursor
 
-            # Branch: max_subr_cpg <= 0 -> limit_value is bound None (LIMIT NULL)
-            dialersetting.max_subr_cpg = 0
-            dialersetting.save()
-
-            connection.cursor = lambda: fake_cursor
-            try:
-                importcontact_custom_sql(1, 1)
-            finally:
-                connection.cursor = original_cursor
-
-        self.assertEqual(len(fake_cursor.calls), 2)
-        for sql, params in fake_cursor.calls:
+        self.assertEqual(len(calls), 2)
+        for sql, params in calls:
             self.assertIn('phonebook_id=%s', sql)
             self.assertNotIn('phonebook_id=1', sql)
             self.assertIn('LIMIT %s', sql)
             self.assertEqual(params[:3], [1, 1, 1])
-        self.assertGreater(fake_cursor.calls[0][1][3], 0)
-        self.assertIsNone(fake_cursor.calls[1][1][3])
+        self.assertGreater(calls[0][1][3], 0)
+        self.assertIsNone(calls[1][1][3])
 
         call_command("create_contact", "3|10")
 
