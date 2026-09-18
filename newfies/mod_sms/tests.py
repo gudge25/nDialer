@@ -365,6 +365,41 @@ class SMSCeleryTaskTestCase(TestCase):
         result = resend_sms_update_smscampaignsubscriber.delay()
         self.assertEqual(result.successful(), True)
 
+    def test_importcontact_custom_sql_parameterized(self):
+        """importcontact_custom_sql must bind sms_campaign_id/phonebook_id
+        as query parameters, never string-interpolate them into the SQL
+        text, for both the MySQL and PostgreSQL branches."""
+        from django.conf import settings
+        from django.db import connection
+        from django.test.utils import override_settings
+        from mod_sms.tasks import importcontact_custom_sql
+
+        class FakeCursor(object):
+            def __init__(self):
+                self.calls = []
+
+            def execute(self, sql, params=None):
+                self.calls.append((sql, params))
+
+        fake_cursor = FakeCursor()
+        original_cursor = connection.cursor
+        connection.cursor = lambda: fake_cursor
+
+        try:
+            for engine in ('django.db.backends.mysql', 'django.db.backends.postgresql_psycopg2'):
+                databases = dict(settings.DATABASES)
+                databases['default'] = dict(databases['default'], ENGINE=engine)
+                with override_settings(DATABASES=databases):
+                    importcontact_custom_sql(1, 1)
+        finally:
+            connection.cursor = original_cursor
+
+        self.assertEqual(len(fake_cursor.calls), 2)
+        for sql, params in fake_cursor.calls:
+            self.assertIn('phonebook_id=%s', sql)
+            self.assertNotIn('phonebook_id=1', sql)
+            self.assertEqual(params[:2], [1, 1])
+
 
 class SMSCampaignModel(TestCase):
 
@@ -440,6 +475,7 @@ class SMSCampaignModel(TestCase):
 
         self.smscampaign.get_active_max_frequency()
         self.smscampaign.get_active_contact()
+        list(self.smscampaign.get_active_contact_no_subscriber())
         self.smscampaign.progress_bar()
         self.smscampaign.sms_campaignsubscriber_detail()
         self.smscampaign.get_pending_subscriber()

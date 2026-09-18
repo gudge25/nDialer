@@ -303,6 +303,57 @@ class DialerContactCeleryTaskTestCase(TestCase):
         # Test mgt command
         call_command("create_contact", "1|10")
 
+    def test_importcontact_custom_sql_parameterized(self):
+        """importcontact_custom_sql must bind campaign/phonebook ids and the
+        subscriber limit as query parameters, never string-interpolate them
+        into the SQL text (both the "limit configured" and "no limit
+        configured" branches)."""
+        from django.conf import settings
+        from django.db import connection
+        from django.test.utils import override_settings
+        from dialer_campaign.models import Campaign
+        from dialer_contact.tasks import importcontact_custom_sql
+        from user_profile.models import UserProfile
+
+        class FakeCursor(object):
+            def __init__(self):
+                self.calls = []
+
+            def execute(self, sql, params=None):
+                self.calls.append((sql, params))
+
+        fake_cursor = FakeCursor()
+        original_cursor = connection.cursor
+        connection.cursor = lambda: fake_cursor
+
+        campaign_obj = Campaign.objects.get(pk=1)
+        dialersetting = UserProfile.objects.get(user=campaign_obj.user).dialersetting
+
+        postgres_databases = dict(settings.DATABASES)
+        postgres_databases['default'] = dict(
+            postgres_databases['default'], ENGINE='django.db.backends.postgresql_psycopg2')
+
+        try:
+            with override_settings(DATABASES=postgres_databases):
+                # Branch: max_subr_cpg > 0 -> limit_value is a bound int
+                importcontact_custom_sql(1, 1)
+
+                # Branch: max_subr_cpg <= 0 -> limit_value is bound None (LIMIT NULL)
+                dialersetting.max_subr_cpg = 0
+                dialersetting.save()
+                importcontact_custom_sql(1, 1)
+        finally:
+            connection.cursor = original_cursor
+
+        self.assertEqual(len(fake_cursor.calls), 2)
+        for sql, params in fake_cursor.calls:
+            self.assertIn('phonebook_id=%s', sql)
+            self.assertNotIn('phonebook_id=1', sql)
+            self.assertIn('LIMIT %s', sql)
+            self.assertEqual(params[:3], [1, 1, 1])
+        self.assertGreater(fake_cursor.calls[0][1][3], 0)
+        self.assertIsNone(fake_cursor.calls[1][1][3])
+
         call_command("create_contact", "3|10")
 
 
