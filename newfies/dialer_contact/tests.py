@@ -329,7 +329,10 @@ class DialerContactCeleryTaskTestCase(TestCase):
                 self._real = original_cursor()
 
             def execute(self, sql, params=None):
-                if 'dialer_subscriber' in sql:
+                # Match only the raw INSERT itself, not ORM-generated
+                # SELECT/COUNT queries against the same dialer_subscriber table
+                # (e.g. the imported_subscriber_count lookup inside the function).
+                if 'LOCK TABLE dialer_subscriber' in sql:
                     calls.append((sql, params))
                     return
                 return self._real.execute(sql, params) if params is not None else self._real.execute(sql)
