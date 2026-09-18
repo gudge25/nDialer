@@ -30,6 +30,8 @@ class FrontendView(BaseAuthenticatedClient):
         response = self.client.get('/admin/')
         self.failUnlessEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/base_site.html')
+        # Throwaway password for a Django test-client login against a
+        # per-test in-memory database; not a real credential.
         response = self.client.login(username=self.user.username,
                                      password='admin')
         self.assertEqual(response, True)
@@ -51,6 +53,8 @@ class FrontendCustomerView(BaseAuthenticatedClient):
 
     def test_login_view(self):
         """Test Function to check login view"""
+        # Throwaway passwords below are for Django test-client calls
+        # against a per-test in-memory database; not real credentials.
         response = self.client.post('/login/',
                                     {'user': 'admin',
                                      'password': 'admin'}, follow=True)

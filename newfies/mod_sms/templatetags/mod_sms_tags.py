@@ -43,6 +43,9 @@ def sms_campaign_status(value):
 
 @register.filter(name='get_sms_campaign_status')
 def get_sms_campaign_status(id):
+    """Rendered with |safe in templates: id is always an integer status
+    code keyed against the fixed SMS_CAMPAIGN_STATUS_COLOR map, never free
+    text."""
     return get_common_campaign_status(id, SMS_CAMPAIGN_STATUS, SMS_CAMPAIGN_STATUS_COLOR)
 
 
@@ -54,7 +57,11 @@ def get_sms_campaign_status_url(id, status):
 
 @register.filter(name='create_duplicate_sms_campaign')
 def create_duplicate_sms_campaign(sms_campaign_id):
-    """Create link to make duplicate campaign"""
+    """Create link to make duplicate campaign
+
+    Rendered with |safe in templates: sms_campaign_id is always an integer
+    primary key (row.id from the queryset), never free text.
+    """
     link = '<a href="#sms-campaign-duplicate"  url="/sms_campaign/duplicate/%s/" class="sms-campaign-duplicate" data-toggle="modal" data-controls-modal="sms-campaign-duplicate" title="%s"><i class="fa fa-copy"></i></a>' \
            % (sms_campaign_id, _('Duplicate this sms campaign'))
     return link
@@ -62,7 +69,12 @@ def create_duplicate_sms_campaign(sms_campaign_id):
 
 @register.filter(name='get_sms_campaign_textmessage')
 def get_sms_campaign_textmessage(sms_campaign_id):
-    """Create link to get sms campaign's text-message"""
+    """Create link to get sms campaign's text-message
+
+    Rendered with |safe in templates: sms_campaign_id is always an integer
+    primary key (row.id from the queryset), never free text (this filter
+    builds a link, it does not render the message content itself).
+    """
     link = '<a href="#sms-campaign-textmessage"  url="/sms_campaign/text_message/%s/" class="sms-campaign-textmessage" data-toggle="modal" data-controls-modal="sms-campaign-textmessage" title="%s"><i class="fa fa-search"></i></a>' \
            % (sms_campaign_id, _('Get text-message of this sms campaign'))
     return link

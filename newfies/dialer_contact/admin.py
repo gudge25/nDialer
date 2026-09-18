@@ -155,7 +155,7 @@ class ContactAdmin(admin.ModelAdmin):
             # Read each Row
             for row in rdr:
                 row = striplist(row)
-                if not row or str(row[0]) == 0:
+                if not row or str(row[0]) == '0':
                     continue
 
                 # check field type

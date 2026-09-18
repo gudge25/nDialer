@@ -17,6 +17,8 @@
 <script src="{{ STATIC_URL }}newfies/js/agent_controller.js"></script>
 {% if user.is_authenticated %}
 <script type="text/javascript">
+    {# This whole block is inside a JS /* */ comment, so it never executes; #}
+    {# user_json is also never set by any view in this codebase. #}
     /*
     agent_panel.run(function($rootScope) {
         $rootScope.user = {{user_json|safe}};

@@ -90,6 +90,25 @@ class DialerContactView(BaseAuthenticatedClient):
         #    data={'phonebook_id': '1', 'csv_file': csv_file})
         #self.assertEqual(response.status_code, 200)
 
+    def test_admin_contact_import_skips_zero_marker_row(self):
+        """A row whose first column is "0" must be skipped like an empty
+        row, not imported as a Contact, via the admin import_contact view."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        before_count = Contact.objects.count()
+        csv_content = (
+            b'0|Doe|John|john@example.com|test|1|Address|City|State|ES|123|\n'
+            b'40009998|Doe|John|john@example.com|test|1|Address|City|State|ES|123|\n'
+        )
+        upload = SimpleUploadedFile('import.csv', csv_content)
+        response = self.client.post(
+            '/admin/dialer_contact/contact/import_contact/',
+            data={'phonebook': '1', 'csv_file': upload})
+        self.assertEqual(response.status_code, 200)
+
+        self.assertFalse(Contact.objects.filter(contact='0').exists())
+        self.assertEqual(Contact.objects.count(), before_count + 1)
+
 
 class DialerContactCustomerView(BaseAuthenticatedClient):
 
@@ -275,6 +294,24 @@ class DialerContactCustomerView(BaseAuthenticatedClient):
         request.session = {}
         response = contact_import(request)
         self.assertEqual(response.status_code, 200)
+
+    def test_contact_import_skips_zero_marker_row(self):
+        """A row whose first column is "0" must be skipped like an empty
+        row, not imported as a Contact."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        before_count = Contact.objects.count()
+        csv_content = (
+            b'0|Doe|John|john@example.com|test|1|Address|City|State|ES|123|\n'
+            b'40009999|Doe|John|john@example.com|test|1|Address|City|State|ES|123|\n'
+        )
+        upload = SimpleUploadedFile('import.csv', csv_content)
+        response = self.client.post('/contact_import/',
+                                    data={'phonebook': '1', 'csv_file': upload})
+        self.assertEqual(response.status_code, 200)
+
+        self.assertFalse(Contact.objects.filter(contact='0').exists())
+        self.assertEqual(Contact.objects.count(), before_count + 1)
 
     def test_get_contact_count(self):
         request = self.factory.get('/contact/', {'ids': '1'})

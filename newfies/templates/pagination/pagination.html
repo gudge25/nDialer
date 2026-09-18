@@ -7,6 +7,9 @@
   <div class="text-center">
     <ul class="pagination">
       {% block previouslink %}
+        {# previous_link_decorator/next_link_decorator come from linaro-django-pagination's #}
+        {# PAGINATION_PREVIOUS_LINK_DECORATOR/PAGINATION_NEXT_LINK_DECORATOR Django settings #}
+        {# (deployment-time config, defaulting to static HTML-entity arrows), never request data. #}
         {% if page_obj.has_previous %}
           <li class="prev"><a href="?page{{ page_suffix }}={{ page_obj.previous_page_number }}{{ getvars }}">{{ previous_link_decorator|safe }}{% trans "previous"|title %}</a></li>
         {% else %}
@@ -33,6 +36,7 @@
         {% endif %}
       {% endblock pagelinks %}
       {% block nextlink %}
+        {# next_link_decorator: same as previous_link_decorator above - a Django setting, never request data. #}
         {% if page_obj.has_next %}
           <li class="next"><a href="?page{{ page_suffix }}={{ page_obj.next_page_number }}{{ getvars }}">{% trans "next"|title %}{{ next_link_decorator|safe }}</a></li>
         {% else %}

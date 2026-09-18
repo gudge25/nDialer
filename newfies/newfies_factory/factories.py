@@ -94,6 +94,8 @@ class UserFactory(factory.django.DjangoModelFactory):
     first_name = factory.Sequence(lambda n: 'John {0}'.format(n))
     last_name = factory.Sequence(lambda n: 'Doe {0}'.format(n))
     email = factory.Sequence(lambda n: 'user{0}@example.com'.format(n))
+    # Test-only fixture value; this factory is imported only by
+    # appointment/tests.py, never used to seed production data.
     password = '1234'
     # Use a SuperUser for test to not have to deal with permissions
     is_active = True
@@ -124,6 +126,8 @@ class ManagerFactory(factory.django.DjangoModelFactory):
     first_name = factory.Sequence(lambda n: 'John {0}'.format(n))
     last_name = factory.Sequence(lambda n: 'Doe {0}'.format(n))
     email = factory.Sequence(lambda n: 'user{0}@example.com'.format(n))
+    # Test-only fixture value; this factory is imported only by
+    # appointment/tests.py, never used to seed production data.
     password = '1234'
     # Use a SuperUser for test to not have to deal with permissions
     is_active = True
@@ -189,6 +193,8 @@ class CalendarUserFactory(factory.django.DjangoModelFactory):
     first_name = factory.Sequence(lambda n: 'John {0}'.format(n))
     last_name = factory.Sequence(lambda n: 'Doe {0}'.format(n))
     email = factory.Sequence(lambda n: 'user{0}@example.com'.format(n))
+    # Test-only fixture value; this factory is imported only by
+    # appointment/tests.py, never used to seed production data.
     password = '1234'
     # Use a SuperUser for test to not have to deal with permissions
     is_active = True

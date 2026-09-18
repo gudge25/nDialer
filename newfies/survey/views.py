@@ -1154,7 +1154,7 @@ def import_survey(request):
             # Read each row
             for row in records:
                 row = striplist(row)
-                if not row or str(row[0]) == 0:
+                if not row or str(row[0]) == '0':
                     continue
 
                 # if length of row is 30, it's a section

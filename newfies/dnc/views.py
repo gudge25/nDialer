@@ -395,7 +395,7 @@ def dnc_contact_import(request):
         # Read each Row
         for row in csv_data:
             row = striplist(row)
-            if not row or str(row[0]) == 0:
+            if not row or str(row[0]) == '0':
                 continue
 
             # Check field type

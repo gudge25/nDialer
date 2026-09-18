@@ -243,6 +243,20 @@ class DNCCustomerView(BaseAuthenticatedClient):
         response = dnc_contact_import(request)
         self.assertEqual(response.status_code, 200)
 
+    def test_dnc_contact_import_skips_zero_marker_row(self):
+        """A row whose only column is "0" must be skipped like an empty
+        row, not imported as a DNCContact."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        before_count = DNCContact.objects.count()
+        upload = SimpleUploadedFile('import.csv', b'0\n9998887777\n')
+        response = self.client.post('/module/dnc_contact_import/',
+                                    data={'dnc_list': '1', 'csv_file': upload})
+        self.assertEqual(response.status_code, 200)
+
+        self.assertFalse(DNCContact.objects.filter(phone_number='0').exists())
+        self.assertEqual(DNCContact.objects.count(), before_count + 1)
+
     def test_get_dnc_contact_count(self):
         request = self.factory.get('/module/dnc_contact/', {'ids': '1'})
         request.user = self.user
