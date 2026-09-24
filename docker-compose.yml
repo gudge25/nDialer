@@ -6,6 +6,16 @@
 #   docker compose build && docker compose up -d
 # The app image's Dockerfile does `COPY --from=newfies-freeswitch:v1.4` (the
 # ESL Python bindings) at build time, so `freeswitch` must be built first.
+#
+# Deploying a code update (pull + rebuild `web`/`celery_worker`/`celery_beat`,
+# which share the app image): always restart `nginx` right after, even
+# though nginx's own image/config didn't change:
+#   docker compose build web && docker compose up -d web celery_worker celery_beat
+#   docker compose restart nginx
+# Recreating `web` gives it a new container (new internal Docker-network IP).
+# nginx resolves the `web` upstream hostname once at its own startup and
+# caches that IP, so if nginx isn't restarted too, it keeps proxying to the
+# now-dead old IP and every request 502s until nginx is restarted.
 
 x-app-image: &app-image
   build:
